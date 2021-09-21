@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "329728025842",
+    "project_id": "actnow-4b2f5",
+    "storage_bucket": "actnow-4b2f5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:329728025842:android:86a1421eacdbb68025dc6b",
+        "android_client_info": {
+          "package_name": "com.example.actnow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "329728025842-hmlobgecuj2gq8gcpmcolri8lca7nd9q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAX2-dp2tBlMtzm_PkwwV_LBFNbnT8SY-4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "329728025842-hmlobgecuj2gq8gcpmcolri8lca7nd9q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
