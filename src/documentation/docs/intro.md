@@ -2,5 +2,5 @@
 sidebar_position: 1
 ---
 
-# Hello World
+# About Us
 We can write our docs here
