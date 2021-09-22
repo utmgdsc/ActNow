@@ -59,13 +59,13 @@ class _LoginPageState extends State<LoginPage> {
             Stack(
               children: <Widget>[
                 Container(
-                  padding: const EdgeInsets.fromLTRB(15.0, 180.0, 0.0, 0.0),
+                  padding: const EdgeInsets.fromLTRB(15.0, 115.0, 0.0, 0.0),
                   child: const Text('Welcome to ActNow!',
                       style: TextStyle(
                           fontSize: 30.0, fontWeight: FontWeight.bold)),
                 ),
                 Container(
-                  padding: const EdgeInsets.fromLTRB(16.0, 215, 0.0, 0.0),
+                  padding: const EdgeInsets.fromLTRB(16.0, 155, 0.0, 0.0),
                   child: const Text('Login to continue...',
                       style: TextStyle(fontSize: 15.0)),
                 ),
@@ -124,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                             child: Text(
                               'Forgot Password?',
                               style: TextStyle(
-                                  color: Colors.green,
+                                  color: Colors.blue,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'Montserrat'),
                             ),
@@ -138,8 +138,8 @@ class _LoginPageState extends State<LoginPage> {
                             shadowColor: Colors.greenAccent,
                             color: Colors.green,
                             elevation: 7.0,
-                            child: GestureDetector(
-                              onTap: () {
+                            child: ElevatedButton(
+                              onPressed: () {
                                 loginEmailPass();
                               },
                               child: const Center(
@@ -174,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
                   },
                   child: const Text('Sign Up',
                       style: TextStyle(
-                          color: Colors.green,
+                          color: Colors.blue,
                           fontFamily: 'Montserrat',
                           fontWeight: FontWeight.bold)),
                 )
