@@ -18,13 +18,13 @@ class _SignupPageState extends State<SignupPage> {
               Stack(
                 children: <Widget>[
                   Container(
-                    padding: const EdgeInsets.fromLTRB(15.0, 180.0, 0.0, 0.0),
+                    padding: const EdgeInsets.fromLTRB(15.0, 115.0, 0.0, 0.0),
                     child: const Text('Create your Account',
                         style: TextStyle(
                             fontSize: 30.0, fontWeight: FontWeight.bold)),
                   ),
                   Container(
-                    padding: const EdgeInsets.fromLTRB(16.0, 215, 0.0, 0.0),
+                    padding: const EdgeInsets.fromLTRB(16.0, 155, 0.0, 0.0),
                     child: const Text('Sign up to start using ActNow',
                         style: TextStyle(fontSize: 15.0)),
                   ),
