@@ -13,7 +13,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Required for form validator
+  final GlobalKey<FormState> _formKey =
+      GlobalKey<FormState>(); // Required for form validator
 
   final TextEditingController _userEmail = TextEditingController();
   final TextEditingController _userPassword = TextEditingController();
@@ -24,19 +25,25 @@ class _LoginPageState extends State<LoginPage> {
         UserCredential userCreds = await FirebaseAuth.instance
             .signInWithEmailAndPassword(
                 email: _userEmail.text, password: _userPassword.text);
-        widget.onSignIn(userCreds.user);
+
+        if (userCreds.user != null && !userCreds.user!.emailVerified) {
+          showError("Please verify your email", "VERIFY");
+        }
+        else {
+          widget.onSignIn(userCreds.user);
+        }
       } on FirebaseAuthException catch (e) {
-        showError(e.message);
+        showError(e.message, "ERROR");
       }
     }
   }
 
-  showError(String? errormessage) {
+  showError(String? errormessage, String? title) {
     showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('ERROR'),
+            title: Text(title!),
             content: Text(errormessage!),
             actions: <Widget>[
               TextButton(
