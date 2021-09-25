@@ -1,5 +1,5 @@
 ---
-name: Documentation Request
+name: Documentation request
 about: Suggest an documentation for this project
 title: ''
 labels: documentation
