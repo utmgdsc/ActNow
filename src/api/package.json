@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "npm run build && node dist/index.js",
+    "dev": "nodemon --exec babel-node index.js",
+    "build": "babel index.js -d dist"
   },
   "author": "",
   "license": "ISC",
@@ -13,6 +14,10 @@
     "express": "^4.17.1"
   },
   "devDependencies": {
+    "@babel/cli": "^7.15.7",
+    "@babel/core": "^7.15.5",
+    "@babel/node": "^7.15.4",
+    "@babel/preset-env": "^7.15.6",
     "nodemon": "^2.0.13"
   }
 }
