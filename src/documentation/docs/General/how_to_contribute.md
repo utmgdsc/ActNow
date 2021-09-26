@@ -13,7 +13,10 @@ To make a contribution to our application, visit our [GitHub](https://github.com
 
 When you are working on anything new, please select one of the templates above and fill in the details required. In very cases where you work does not belong in any of these categories, then make an separate issue and fill out as much detail as possible. 
 
-## Branch naming
+## Naming conventions
+### Docs file naming
+For all docs naming, we will follow the convention of lower camel case. For example, the file `test_doc.md` is correct, but `testDoc.md` is not.
+### Branch naming
 Although we do not have specifics requirements for what your branch needs to be named, the convention we follow is as follows: 
 
 1. Features -> feat/...
