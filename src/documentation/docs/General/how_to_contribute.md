@@ -5,7 +5,7 @@ sidebar_position: 1
 # How to contribute
 
 ## Contribution
-To make a contribution to our application, visit our [GitHub]("https://github.com/GDSCUTM-CommunityProjects/ActNow") and make an issue. Currently, we have 3 issue templates:
+To make a contribution to our application, visit our [GitHub](https://github.com/GDSCUTM-CommunityProjects/ActNow) and make an issue. Currently, we have 3 issue templates:
 
 1. Feature request
 2. Documentation request
