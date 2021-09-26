@@ -1,6 +1,7 @@
 import 'package:actnow/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'signup_screen.dart';
 
 class LoginPage extends StatefulWidget {
@@ -18,6 +19,7 @@ class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController _userEmail = TextEditingController();
   final TextEditingController _userPassword = TextEditingController();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
   loginEmailPass() async {
     if (_formKey.currentState!.validate()) {
@@ -28,8 +30,7 @@ class _LoginPageState extends State<LoginPage> {
 
         if (userCreds.user != null && !userCreds.user!.emailVerified) {
           showError("Please verify your email", "VERIFY");
-        }
-        else {
+        } else {
           widget.onSignIn(userCreds.user);
         }
       } on FirebaseAuthException catch (e) {
@@ -58,6 +59,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    GoogleSignInAccount? user = _googleSignIn.currentUser;
     return Scaffold(
         resizeToAvoidBottomInset: false,
         body: Column(
@@ -74,6 +76,12 @@ class _LoginPageState extends State<LoginPage> {
                 Container(
                   padding: const EdgeInsets.fromLTRB(16.0, 155, 0.0, 0.0),
                   child: const Text('Login to continue...',
+                      style: TextStyle(fontSize: 15.0)),
+                ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16.0, 185, 0.0, 0.0),
+                  child: Text(
+                      'google test ' + (user == null ? 'failed' : 'works'),
                       style: TextStyle(fontSize: 15.0)),
                 ),
               ],
@@ -152,6 +160,31 @@ class _LoginPageState extends State<LoginPage> {
                               child: const Center(
                                 child: Text(
                                   'LOGIN',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Montserrat'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        SizedBox(
+                          height: 40.0,
+                          child: Material(
+                            borderRadius: BorderRadius.circular(20.0),
+                            shadowColor: Colors.greenAccent,
+                            color: Colors.green,
+                            elevation: 7.0,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                await _googleSignIn.signIn();
+                                setState(() {});
+                              },
+                              child: const Center(
+                                child: Text(
+                                  'Sign in with Google',
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
