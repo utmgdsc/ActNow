@@ -8,8 +8,13 @@ const FeatureList = [
     Svg: require('../../static/img/easy.svg').default,
     description: (
       <>
+<<<<<<< HEAD
         ActNow is designed from the ground up to be easily installed and connect you with
         interesting events.
+=======
+        ActNow was designed from the ground up to be easily installed and used to connect with
+        people around you.
+>>>>>>> master
       </>
     ),
   },
@@ -18,7 +23,11 @@ const FeatureList = [
     Svg: require('../../static/img/focus.svg').default,
     description: (
       <>
+<<<<<<< HEAD
         Unlike other platforms, we want you to use ActNow less. Our goal is for you to put down the app and
+=======
+        Unlike other platforms, we want you to use ActNow less. Our goal is to put down the app and
+>>>>>>> master
         meet other people outside.
       </>
     ),

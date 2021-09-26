@@ -5,7 +5,11 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 (
   module.exports = {
+<<<<<<< HEAD
     title: 'ActNow',
+=======
+    title: 'Act Now',
+>>>>>>> master
     tagline: 'A social media platform aiming to connect people in person',
     url: 'https://your-docusaurus-test-site.com',
     baseUrl: '/',
@@ -36,7 +40,11 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       ({
         navbar: {
+<<<<<<< HEAD
           title: 'ActNow',
+=======
+          title: 'Act Now',
+>>>>>>> master
           logo: {
             alt: 'My Site Logo',
             src: 'img/logo.svg',
