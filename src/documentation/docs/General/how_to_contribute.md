@@ -38,7 +38,3 @@ For our application, all docs are written in markdown. To write docs, follow the
 4. When you are done, make a pull request and request some of the ActNow team to review the PR.
     - In the pr, there should a github action checking to see a preview of the docs deployed on staging, make sure that this check passes, otherwise that means the docs will not be deployed properly.
     - Example: ![](../../static/img/netlify-check.png)
-
-
-
-
