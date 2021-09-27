@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({Key? key}) : super(key: key);
@@ -8,35 +10,112 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
+  final GlobalKey<FormState> _formKey =
+      GlobalKey<FormState>(); // Required for form validator
+
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  CollectionReference users = FirebaseFirestore.instance.collection('users');
+
+  // User creds
+  final TextEditingController _userEmail = TextEditingController();
+  final TextEditingController _userPassword = TextEditingController();
+
+  // User info
+  final TextEditingController _username = TextEditingController();
+  final TextEditingController _firstName = TextEditingController();
+  final TextEditingController _lastName = TextEditingController();
+
+  signUpEmailPass() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        UserCredential userCreds = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+                email: _userEmail.text, password: _userPassword.text);
+
+        users.add({
+          'userid': userCreds.user!.uid,
+          'username': _username.text,
+          'firstname': _firstName.text,
+          'lastname': _lastName.text
+        });
+
+        if (userCreds.user != null && !userCreds.user!.emailVerified) {
+          showError("Please verify your email", "VERIFY");
+          await userCreds.user!.sendEmailVerification();
+        }
+      } on FirebaseAuthException catch (e) {
+        if (e.code == "weak-password") {
+          showError("The password provided is too weak.", "ERROR");
+        } else if (e.code == "email-already-in-use") {
+          showError("The account already exists for that email", "ERROR");
+        }
+      }
+    }
+  }
+
+  showError(String? errormessage, String? title) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title!),
+            content: Text(errormessage!),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    if (title == "VERIFY") {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: const Text('OK'))
+            ],
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         resizeToAvoidBottomInset: false,
-        body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <
+            Widget>[
+          Stack(
             children: <Widget>[
-              Stack(
-                children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(15.0, 115.0, 0.0, 0.0),
-                    child: const Text('Create your Account',
-                        style: TextStyle(
-                            fontSize: 30.0, fontWeight: FontWeight.bold)),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(16.0, 155, 0.0, 0.0),
-                    child: const Text('Sign up to start using ActNow',
-                        style: TextStyle(fontSize: 15.0)),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.fromLTRB(15.0, 115.0, 0.0, 0.0),
+                child: const Text('Create your Account',
+                    style:
+                        TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold)),
               ),
               Container(
-                  padding:
-                      const EdgeInsets.only(top: 35.0, left: 20.0, right: 20.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 155, 0.0, 0.0),
+                child: const Text('Sign up to start using ActNow',
+                    style: TextStyle(fontSize: 15.0)),
+              ),
+            ],
+          ),
+          Container(
+              padding:
+                  const EdgeInsets.only(top: 35.0, left: 20.0, right: 20.0),
+              child: Form(
+                  key: _formKey,
                   child: Column(
                     children: <Widget>[
-                      const TextField(
-                        decoration: InputDecoration(
+                      TextFormField(
+                        validator: (input) {
+                          if (input == null || input.isEmpty) {
+                            return "Enter an email";
+                          }
+                          bool validEmail = RegExp(
+                                  r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                              .hasMatch(input);
+                          if (!validEmail) {
+                            return "Enter a valid email";
+                          }
+                        },
+                        controller: _userEmail,
+                        decoration: const InputDecoration(
                             labelText: 'EMAIL',
                             labelStyle: TextStyle(
                                 fontFamily: 'Montserrat',
@@ -46,8 +125,14 @@ class _SignupPageState extends State<SignupPage> {
                                 borderSide: BorderSide(color: Colors.green))),
                       ),
                       const SizedBox(height: 10.0),
-                      const TextField(
-                        decoration: InputDecoration(
+                      TextFormField(
+                        validator: (input) {
+                          if (input == null || input.isEmpty) {
+                            return "Please enter a username";
+                          }
+                        },
+                        controller: _username,
+                        decoration: const InputDecoration(
                             labelText: 'USERNAME ',
                             labelStyle: TextStyle(
                                 fontFamily: 'Montserrat',
@@ -59,12 +144,18 @@ class _SignupPageState extends State<SignupPage> {
                       const SizedBox(height: 10.0),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const <Widget>[
+                        children: <Widget>[
                           Flexible(
                             child: Padding(
-                              padding: EdgeInsets.fromLTRB(0, 0, 5, 0),
-                              child: TextField(
-                                decoration: InputDecoration(
+                              padding: const EdgeInsets.fromLTRB(0, 0, 5, 0),
+                              child: TextFormField(
+                                validator: (input) {
+                                  if (input == null || input.isEmpty) {
+                                    return "Please enter a first name";
+                                  }
+                                },
+                                controller: _firstName,
+                                decoration: const InputDecoration(
                                     labelText: 'FIRST NAME ',
                                     labelStyle: TextStyle(
                                         fontFamily: 'Montserrat',
@@ -78,9 +169,15 @@ class _SignupPageState extends State<SignupPage> {
                           ),
                           Flexible(
                             child: Padding(
-                              padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
-                              child: TextField(
-                                decoration: InputDecoration(
+                              padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+                              child: TextFormField(
+                                validator: (input) {
+                                  if (input == null || input.isEmpty) {
+                                    return "Please enter a lastname";
+                                  }
+                                },
+                                controller: _lastName,
+                                decoration: const InputDecoration(
                                     labelText: 'LAST NAME ',
                                     labelStyle: TextStyle(
                                         fontFamily: 'Montserrat',
@@ -95,8 +192,14 @@ class _SignupPageState extends State<SignupPage> {
                         ],
                       ),
                       const SizedBox(height: 10.0),
-                      const TextField(
-                        decoration: InputDecoration(
+                      TextFormField(
+                        validator: (input) {
+                          if (input == null || input.isEmpty) {
+                            return "Please enter a password";
+                          }
+                        },
+                        controller: _userPassword,
+                        decoration: const InputDecoration(
                             labelText: 'PASSWORD ',
                             labelStyle: TextStyle(
                                 fontFamily: 'Montserrat',
@@ -114,8 +217,10 @@ class _SignupPageState extends State<SignupPage> {
                             shadowColor: Colors.greenAccent,
                             color: Colors.green,
                             elevation: 7.0,
-                            child: GestureDetector(
-                              onTap: () {},
+                            child: ElevatedButton(
+                              onPressed: () {
+                                signUpEmailPass();
+                              },
                               child: const Center(
                                 child: Text(
                                   'SIGNUP',
@@ -129,28 +234,28 @@ class _SignupPageState extends State<SignupPage> {
                           )),
                       const SizedBox(height: 20.0),
                     ],
-                  )),
-              const SizedBox(height: 15.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  const Text(
-                    'Already have an account?',
-                    style: TextStyle(fontFamily: 'Montserrat'),
-                  ),
-                  const SizedBox(width: 5.0),
-                  InkWell(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Login in',
-                        style: TextStyle(
-                            color: Colors.green,
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.bold)),
-                  )
-                ],
+                  ))),
+          const SizedBox(height: 15.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Text(
+                'Already have an account?',
+                style: TextStyle(fontFamily: 'Montserrat'),
+              ),
+              const SizedBox(width: 5.0),
+              InkWell(
+                onTap: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Login in',
+                    style: TextStyle(
+                        color: Colors.blue,
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.bold)),
               )
-            ]));
+            ],
+          )
+        ]));
   }
 }
