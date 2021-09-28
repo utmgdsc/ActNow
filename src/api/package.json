@@ -13,6 +13,7 @@
   "dependencies": {
     "core-js": "^3.18.1",
     "express": "^4.17.1",
+    "puppeteer": "^10.4.0",
     "regenerator-runtime": "^0.13.9"
   },
   "devDependencies": {
