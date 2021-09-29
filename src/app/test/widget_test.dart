@@ -16,4 +16,3 @@ void main() {
     expect(addition(1, 2), 3);
   });
 }
-
