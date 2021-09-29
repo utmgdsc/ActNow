@@ -1,2 +1,2 @@
 ## ActNow
-We are a social media platform designed to get you to look at your phone less.
+We are a social media platform designed to make you look at your phone less.
