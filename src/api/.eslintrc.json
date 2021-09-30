@@ -9,6 +9,8 @@
     "sourceType": "module"
   },
   "rules": {
-    "arrow-body-style": 0
+    "arrow-body-style": 0,
+    "prefer-template": 0,
+    "operator-linebreak": 0
   }
 }
