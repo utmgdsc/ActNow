@@ -12,10 +12,9 @@ const timeout = (ms) =>
 app.get('/', (req, res) => {
   var eventsArray = [];
   (async () => {
-    // ADD WEBPAGE LINK HERE
+  
     let webpageUrl = "https://www.eventbrite.ca";
 
-    // SET HEADLESS TO TRUE TO NOT HAVE THE BROWSER OPEN
     let browser = await puppeteer.launch({ headless: false });
     let page = await browser.newPage();
     await page.setViewport({
@@ -35,7 +34,6 @@ app.get('/', (req, res) => {
 
     eventsArray = await page.evaluate(() => {
 
-        // // ADD QUERIES INSIDE THE EMPTY STRINGS BELOW
         var events = [];
         for (let i = 1; i < 9; i++) {
           console.log(i);
@@ -59,7 +57,6 @@ app.get('/', (req, res) => {
         return events;
     });
 
-    // await page.waitForNavigation();
     console.log(eventsArray);
     res.send(eventsArray);
     // await browser.close();
