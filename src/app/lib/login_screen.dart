@@ -1,6 +1,7 @@
 import 'package:actnow/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'signup_screen.dart';
 
 class LoginPage extends StatefulWidget {
@@ -28,8 +29,7 @@ class _LoginPageState extends State<LoginPage> {
 
         if (userCreds.user != null && !userCreds.user!.emailVerified) {
           showError("Please verify your email", "VERIFY");
-        }
-        else {
+        } else {
           widget.onSignIn(userCreds.user);
         }
       } on FirebaseAuthException catch (e) {
@@ -61,26 +61,21 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
         resizeToAvoidBottomInset: false,
         body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Stack(
-              children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.fromLTRB(15.0, 115.0, 0.0, 0.0),
-                  child: const Text('Welcome to ActNow!',
-                      style: TextStyle(
-                          fontSize: 30.0, fontWeight: FontWeight.bold)),
-                ),
-                Container(
-                  padding: const EdgeInsets.fromLTRB(16.0, 155, 0.0, 0.0),
-                  child: const Text('Login to continue...',
-                      style: TextStyle(fontSize: 15.0)),
+              children: const <Widget>[
+                Image(
+                  image: AssetImage('assets/Logo.png'),
+                  height: 122,
+                  width: 139.73,
                 ),
               ],
             ),
             Container(
                 padding:
-                    const EdgeInsets.only(top: 100.0, left: 20.0, right: 20.0),
+                    const EdgeInsets.only(top: 60.0, left: 20.0, right: 20.0),
                 child: Form(
                     key: _formKey,
                     child: Column(
@@ -99,14 +94,15 @@ class _LoginPageState extends State<LoginPage> {
                           },
                           controller: _userEmail,
                           decoration: const InputDecoration(
-                              labelText: 'EMAIL',
+                              isDense: true,
+                              labelText: 'Email',
                               labelStyle: TextStyle(
                                   fontFamily: 'Montserrat',
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey),
-                              focusedBorder: UnderlineInputBorder()),
+                              border: OutlineInputBorder()),
                         ),
-                        const SizedBox(height: 20.0),
+                        const SizedBox(height: 10.0),
                         TextFormField(
                           validator: (input) {
                             if (input == null || input.isEmpty) {
@@ -115,15 +111,16 @@ class _LoginPageState extends State<LoginPage> {
                           },
                           controller: _userPassword,
                           decoration: const InputDecoration(
-                              labelText: 'PASSWORD',
+                              isDense: true,
+                              labelText: 'Password',
                               labelStyle: TextStyle(
                                   fontFamily: 'Montserrat',
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey),
-                              focusedBorder: UnderlineInputBorder()),
+                              border: OutlineInputBorder()),
                           obscureText: true,
                         ),
-                        const SizedBox(height: 5.0),
+                        const SizedBox(height: 2.0),
                         Container(
                           alignment: const Alignment(1.0, 0.0),
                           padding: const EdgeInsets.only(top: 15.0),
@@ -137,21 +134,20 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 40.0),
+                        const SizedBox(height: 20.0),
                         SizedBox(
+                          width: 180,
                           height: 40.0,
                           child: Material(
                             borderRadius: BorderRadius.circular(20.0),
-                            shadowColor: Colors.greenAccent,
-                            color: Colors.green,
-                            elevation: 7.0,
+                            shadowColor: Colors.grey,
                             child: ElevatedButton(
                               onPressed: () {
                                 loginEmailPass();
                               },
                               child: const Center(
                                 child: Text(
-                                  'LOGIN',
+                                  'Log In',
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -161,30 +157,70 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20.0),
+                        const SizedBox(height: 10.0),
+                        SizedBox(
+                          width: 180,
+                          height: 40.0,
+                          child: Material(
+                            borderRadius: BorderRadius.circular(20.0),
+                            shadowColor: Colors.grey,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  primary: Colors.white,
+                                  side: const BorderSide(color: Colors.blue)),
+                              onPressed: () {
+                                Route route = MaterialPageRoute(
+                                    builder: (context) => const SignupPage());
+                                Navigator.push(context, route);
+                              },
+                              child: const Center(
+                                child: Text(
+                                  'Sign Up',
+                                  style: TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Montserrat'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ))),
-            const SizedBox(height: 15.0),
+            const SizedBox(height: 60.0),
+            const Text(
+              'Or connect using',
+              style: TextStyle(fontFamily: 'Montserrat'),
+            ),
+            const SizedBox(height: 20.0),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                const Text(
-                  'Don\'t have an accout?',
-                  style: TextStyle(fontFamily: 'Montserrat'),
+                SignInButtonBuilder(
+                  width: 118,
+                  text: 'Facebook',
+                  icon: Icons.facebook,
+                  onPressed: () {},
+                  backgroundColor: const Color(0xFF3B5998),
                 ),
-                const SizedBox(width: 5.0),
-                InkWell(
-                  onTap: () {
-                    Route route = MaterialPageRoute(
-                        builder: (context) => const SignupPage());
-                    Navigator.push(context, route);
-                  },
-                  child: const Text('Sign Up',
-                      style: TextStyle(
-                          color: Colors.blue,
-                          fontFamily: 'Montserrat',
-                          fontWeight: FontWeight.bold)),
-                )
+                const SizedBox(width: 20.0),
+                SignInButtonBuilder(
+                  width: 118,
+                  text: 'Google',
+                  textColor: const Color.fromRGBO(0, 0, 0, 0.54),
+                  image: Container(
+                    margin: const EdgeInsets.fromLTRB(0.0, 0.0, 10.0, 0.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: const Image(
+                        image: NetworkImage('https://developers.google.com/identity/images/g-logo.png'),
+                        height: 20.0,
+                      ),
+                    ),
+                  ),
+                  onPressed: () {},
+                  backgroundColor: const Color(0xFFFFFFFF),
+                ),
               ],
             )
           ],
