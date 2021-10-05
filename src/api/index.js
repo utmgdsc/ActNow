@@ -54,7 +54,11 @@ app.get('/', (req, res) => {
           url: eventUrl ? eventUrl.getAttribute('href') : ''
         });
 
-        if (!(newEvent.title == '' && newEvent.date == '' && newEvent.location == '')) {
+        if (!(newEvent.ticket.substring(0, 4) == 'Free' || newEvent.ticket.substring(0, 9) == 'Starts at')) {
+          newEvent.ticket = '';
+        }
+
+        if (!(newEvent.title === '')) {
           events.push(newEvent);
         }
       }
