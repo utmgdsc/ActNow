@@ -1,5 +1,10 @@
+import 'package:actnow/pages/map_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'pages/map_page.dart';
+import 'pages/profile_page.dart';
+import 'pages/explore_page.dart';
+import 'pages/saved_page.dart';
 
 class HomePage extends StatefulWidget {
   final User? userCreds;
@@ -17,23 +22,58 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  dynamic screens;
+
+  int _selectedIndex = 0;
+  static const TextStyle optionStyle =
+      TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
+
+  @override
+  void initState() {
+    super.initState();
+    screens = [
+      MapPage(),
+      ExplorePage(),
+      SavedPage(),
+      ProfilePage(userCreds: widget.userCreds, onSignOut: widget.onSignOut)
+    ];
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: <Widget>[
-          Container(
-              padding: const EdgeInsets.fromLTRB(30.0, 180.0, 0.0, 0.0),
-              child: Text(
-                "Hello you are Logged in as ${widget.userCreds!.email}",
-              )),
-          ElevatedButton(
-              onPressed: () {
-                widget.signOut();
-              },
-              child:
-                  const Text('Signout', style: TextStyle(color: Colors.white))),
+      body: Center(
+        child: screens[_selectedIndex],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Map',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.business),
+            label: 'Explore',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.school),
+            label: 'Saved',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.school),
+            label: 'Profile',
+          )
         ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blue,
+        onTap: _onItemTapped,
       ),
     );
   }
