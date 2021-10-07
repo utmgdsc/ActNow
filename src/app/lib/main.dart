@@ -3,8 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'decisions_tree.dart';
 
-//void main() => runApp(const MyApp());
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }

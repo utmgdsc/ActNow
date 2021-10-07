@@ -1,6 +1,8 @@
 import 'package:actnow/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 import 'signup_screen.dart';
 
 class LoginPage extends StatefulWidget {
@@ -28,8 +30,7 @@ class _LoginPageState extends State<LoginPage> {
 
         if (userCreds.user != null && !userCreds.user!.emailVerified) {
           showError("Please verify your email", "VERIFY");
-        }
-        else {
+        } else {
           widget.onSignIn(userCreds.user);
         }
       } on FirebaseAuthException catch (e) {
@@ -151,7 +152,31 @@ class _LoginPageState extends State<LoginPage> {
                               },
                               child: const Center(
                                 child: Text(
-                                  'LOGIN',
+                                  'Login',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Montserrat'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20.0),
+                        SizedBox(
+                          height: 40.0,
+                          child: Material(
+                            borderRadius: BorderRadius.circular(20.0),
+                            shadowColor: Colors.greenAccent,
+                            color: Colors.green,
+                            elevation: 7.0,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                GoogleSignIn().signIn();
+                              },
+                              child: const Center(
+                                child: Text(
+                                  'Login With Google',
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
