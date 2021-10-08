@@ -127,15 +127,33 @@ app.get('/', (req, res) => {
         }
 
         if (!(newEvent.title === '')) {
-          events.push(newEvent);
+          events.push(newEvent);          
         }
       }
 
       return events;
     });
 
+    try {
+      eventsArray.forEach(event => {
+        const eventAdd = db.collection('events').add({
+          EventName: newEvent.title,
+          Date: newEvent.date,
+          Image: newEvent.img,
+          Location: newEvent.location,
+          Organization: newEvent.organization,
+          Ticket: newEvent.ticket,
+          Website: "Eventbrite",
+          URL: newEvent.url
+        });   
+      });
+      res.send('worked'); 
+    } catch(error) {
+      res.send("error");
+    }
+
     console.log(eventsArray);
-    res.send(eventsArray);
+    // res.send(eventsArray);
     await browser.close();
   })();
 });
