@@ -217,7 +217,6 @@ class _LoginPageState extends State<LoginPage> {
                                   icon: Icons.facebook,
                                   onPressed: () async {
                                     await handleFacebookSignIn();
-                                    //setState(() {});
                                   },
                                   backgroundColor: const Color(0xFF3B5998),
                                 ),
@@ -241,7 +240,6 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   onPressed: () async {
                                     await handleGoogleSignIn();
-                                    //setState(() {});
                                   },
                                   backgroundColor: const Color(0xFFFFFFFF),
                                 ),
