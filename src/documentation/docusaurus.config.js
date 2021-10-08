@@ -5,9 +5,9 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 (
   module.exports = {
-    title: 'Act Now',
+    title: 'ActNow',
     tagline: 'A social media platform aiming to connect people in person',
-    url: 'https://your-docusaurus-test-site.com',
+    url: 'https://act-now.netlify.app/',
     baseUrl: '/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
@@ -23,7 +23,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           docs: {
             sidebarPath: require.resolve('./sidebars.js'),
             // Please change this to your repo.
-            editUrl: 'https://github.com/GDSCUTM-CommunityProjects/ActNow/documentation',
+            editUrl: 'https://github.com/GDSCUTM-CommunityProjects/ActNow/src/documentation',
           },
           theme: {
             customCss: require.resolve('./src/css/custom.css'),
@@ -36,7 +36,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       ({
         navbar: {
-          title: 'Act Now',
+          title: 'ActNow',
           logo: {
             alt: 'My Site Logo',
             src: 'img/logo.svg',
@@ -44,7 +44,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           items: [
             {
               type: 'doc',
-              docId: 'intro',
+              docId: 'index',
               position: 'left',
               label: 'Docs',
             },
