@@ -1,4 +1,5 @@
 import 'package:actnow/signup_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -20,6 +21,9 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _userEmail = TextEditingController();
   final TextEditingController _userPassword = TextEditingController();
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  CollectionReference users = FirebaseFirestore.instance.collection('users');
 
   loginEmailPass() async {
     if (_formKey.currentState!.validate()) {
@@ -179,7 +183,7 @@ class _LoginPageState extends State<LoginPage> {
                             elevation: 7.0,
                             child: ElevatedButton(
                               onPressed: () async {
-                                await _googleSignIn.signIn();
+                                await _handleSignIn();
                                 setState(() {});
                               },
                               child: const Center(
@@ -195,6 +199,30 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         const SizedBox(height: 20.0),
+                        SizedBox(
+                          height: 40.0,
+                          child: Material(
+                            borderRadius: BorderRadius.circular(20.0),
+                            shadowColor: Colors.greenAccent,
+                            color: Colors.green,
+                            elevation: 7.0,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                await _googleSignIn.signOut();
+                                setState(() {});
+                              },
+                              child: const Center(
+                                child: Text(
+                                  'Sign out with Google',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Montserrat'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ))),
             const SizedBox(height: 15.0),
@@ -222,5 +250,33 @@ class _LoginPageState extends State<LoginPage> {
             )
           ],
         ));
+  }
+
+  Future<Null> _handleSignIn() async {
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser!.authentication;
+
+    final AuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final User? user = (await _auth.signInWithCredential(credential)).user;
+
+    try {
+      users.add({
+        'userid': user!.uid,
+        'username': user.email,
+        'firstname': "asdf",
+        'lastname': "asdf"
+      });
+    } on FirebaseAuthException catch (e) {
+      if (e.code == "email-already-in-use") {
+        showError("The account already exists for that email", "ERROR");
+      }
+    }
+
+    widget.onSignIn(user);
   }
 }
