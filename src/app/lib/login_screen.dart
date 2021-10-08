@@ -205,31 +205,6 @@ class _LoginPageState extends State<LoginPage> {
                         const Text(
                           'Or connect using',
                         ),
-                        const SizedBox(height: 10.0),
-                        SizedBox(
-                          height: 40.0,
-                          child: Material(
-                            borderRadius: BorderRadius.circular(20.0),
-                            shadowColor: Colors.greenAccent,
-                            color: Colors.green,
-                            elevation: 7.0,
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                await _handleSignIn();
-                                setState(() {});
-                              },
-                              child: const Center(
-                                child: Text(
-                                  'Sign in with Google',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Montserrat'),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
                         const SizedBox(height: 20.0),
                         Container(
                             padding: const EdgeInsets.fromLTRB(0, 0, 0, 5),
@@ -261,7 +236,10 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                     ),
                                   ),
-                                  onPressed: () {},
+                                  onPressed: () async {
+                                    await _handleSignIn();
+                                    //setState(() {});
+                                  },
                                   backgroundColor: const Color(0xFFFFFFFF),
                                 ),
                               ],
@@ -282,18 +260,14 @@ class _LoginPageState extends State<LoginPage> {
 
     final User? user = (await _auth.signInWithCredential(credential)).user;
 
-    try {
-      users.add({
-        'userid': user!.uid,
-        'username': user.email,
-        'firstname': "asdf",
-        'lastname': "asdf"
-      });
-    } on FirebaseAuthException catch (e) {
-      if (e.code == "email-already-in-use") {
-        showError("The account already exists for that email", "ERROR");
-      }
-    }
+    DocumentReference ref = firestore.collection('users').doc(user!.uid);
+
+    ref.set({
+      'userid': user.uid,
+      'username': user.email,
+      'firstname': user.displayName,
+      'lastname': ""
+    });
 
     widget.onSignIn(user);
   }
