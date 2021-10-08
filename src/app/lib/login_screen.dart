@@ -215,7 +215,10 @@ class _LoginPageState extends State<LoginPage> {
                                   width: 118,
                                   text: 'Facebook',
                                   icon: Icons.facebook,
-                                  onPressed: () {},
+                                  onPressed: () async {
+                                    await handleFacebookSignIn();
+                                    //setState(() {});
+                                  },
                                   backgroundColor: const Color(0xFF3B5998),
                                 ),
                                 const SizedBox(width: 20.0),
@@ -237,7 +240,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ),
                                   onPressed: () async {
-                                    await _handleSignIn();
+                                    await handleGoogleSignIn();
                                     //setState(() {});
                                   },
                                   backgroundColor: const Color(0xFFFFFFFF),
@@ -248,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
                     )))));
   }
 
-  Future<Null> _handleSignIn() async {
+  Future<Null> handleGoogleSignIn() async {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     final GoogleSignInAuthentication googleAuth =
         await googleUser!.authentication;
@@ -271,4 +274,6 @@ class _LoginPageState extends State<LoginPage> {
 
     widget.onSignIn(user);
   }
+
+  Future<Null> handleFacebookSignIn() async {}
 }
