@@ -1,6 +1,4 @@
-// import 'core-js/stable';
 const corejs = require('core-js/stable');
-// import 'regenerator-runtime/runtime';
 const regenerator = require('regenerator-runtime/runtime');
 const express = require('express');
 const puppeteer = require('puppeteer');
@@ -23,14 +21,9 @@ app.get('/', (req, res) => {
     });
 
     await page.goto(webpageUrl, { waitUntil: 'networkidle2' });
-
-    await timeout(3000);
-
     await page.type('#locationPicker', 'Toronto');
-
     await page.keyboard.press('Enter');
-
-    await timeout(3000);
+    await timeout(2000);
 
     eventsArray = await page.evaluate(() => {
       const events = [];
@@ -62,10 +55,8 @@ app.get('/', (req, res) => {
           events.push(newEvent);
         }
       }
-
       return events;
     });
-
     console.log(eventsArray);
     res.send(eventsArray);
     await browser.close();
@@ -73,5 +64,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`Eventbrite Webscraper API listening at http://localhost:${port}`);
 });
