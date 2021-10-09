@@ -17,6 +17,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+        theme: ThemeData(
+            fontFamily: 'PTSans',
+            textTheme: Theme.of(context).textTheme.apply(
+                  fontSizeFactor: 1.1,
+                )),
         debugShowCheckedModeBanner: false,
         home: FutureBuilder(
           future: _firebaseApp,
