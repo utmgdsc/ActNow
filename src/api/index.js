@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
   (async () => {
     const webpageUrl = 'https://www.eventbrite.ca';
 
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
     await page.setViewport({
       width: 1920,
