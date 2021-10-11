@@ -9,7 +9,7 @@ const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 exports.scrapeEventbrite = functions
   .runWith({
     timeoutSeconds: 30,
-    memory: '1GB',
+    memory: '512MB',
   })
   .https.onRequest(async (_, res) => {
     functions.logger.info('Starting to scrape...');
