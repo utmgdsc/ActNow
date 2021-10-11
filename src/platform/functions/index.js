@@ -1,14 +1,17 @@
 const functions = require('firebase-functions');
 const puppeteer = require('puppeteer');
+const admin = require('firebase-admin');
+
+admin.initializeApp();
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 exports.scrapeEventbrite = functions
   .runWith({
-    timeoutSeconds: 300,
+    timeoutSeconds: 30,
     memory: '256MB',
   })
-  .https.onRequest(async (_, response) => {
+  .https.onRequest(async (_, res) => {
     functions.logger.info('Starting to scrape...');
     let eventsArray = [];
     const webpageUrl = 'https://www.eventbrite.ca';
@@ -77,11 +80,24 @@ exports.scrapeEventbrite = functions
     });
 
     if (eventsArray.length === 0) {
-      functions.logger.error('No events found');
+      functions.logger.error('No events scrapped');
     } else {
       functions.logger.info('Number of scrapper events:', eventsArray.length);
     }
 
+    eventsArray.forEach((event) => {
+      (async () => {
+        await admin
+          .firestore()
+          .collection('allEvents')
+          .doc('eventbrite')
+          .collection('events')
+          .add(event);
+      })();
+    });
+
+    functions.logger.info('Uploaded to firestore');
+
     await browser.close();
-    response.send(eventsArray);
+    res.send(eventsArray);
   });
