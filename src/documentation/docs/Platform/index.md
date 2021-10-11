@@ -13,7 +13,7 @@ For now all our main work is in `functions/index.js` where you can find the code
 
 ## Usage Example
 ### Requirements:
-- Need to have Node.js / npm
+- Node.js / npm
 - Firebase cli
 - Java
 
