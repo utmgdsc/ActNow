@@ -9,17 +9,8 @@ const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 exports.scrapeEventbrite = functions
   .runWith({
-<<<<<<< HEAD
     timeoutSeconds: 60,
     memory: '1GB',
-=======
-    timeoutSeconds: 30,
-<<<<<<< HEAD
-    memory: '512MB',
->>>>>>> ea1fca6 (testing different memory)
-=======
-    memory: '1GB',
->>>>>>> 2b7d058 (reversed memory allocation)
   })
   .https.onRequest(async (_, res) => {
     functions.logger.info('Starting to scrape...');
