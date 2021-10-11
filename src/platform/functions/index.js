@@ -89,9 +89,9 @@ exports.scrapeEventbrite = functions
       (async () => {
         await admin
           .firestore()
-          .collection('allEvents')
-          .doc('eventbrite')
           .collection('events')
+          .doc('eventbrite')
+          .collection('toronto')
           .add(event);
       })();
     });
