@@ -1,6 +1,8 @@
 import 'package:actnow/signup_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'signup_screen.dart';
 
@@ -19,6 +21,10 @@ class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController _userEmail = TextEditingController();
   final TextEditingController _userPassword = TextEditingController();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  CollectionReference users = FirebaseFirestore.instance.collection('users');
 
   loginEmailPass() async {
     if (_formKey.currentState!.validate()) {
@@ -59,6 +65,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     double heightVariable = MediaQuery.of(context).size.height;
+    GoogleSignInAccount? user = _googleSignIn.currentUser;
 
     return Scaffold(
         resizeToAvoidBottomInset: false,
@@ -208,7 +215,9 @@ class _LoginPageState extends State<LoginPage> {
                                   width: 118,
                                   text: 'Facebook',
                                   icon: Icons.facebook,
-                                  onPressed: () {},
+                                  onPressed: () async {
+                                    await handleFacebookSignIn();
+                                  },
                                   backgroundColor: const Color(0xFF3B5998),
                                 ),
                                 const SizedBox(width: 20.0),
@@ -229,7 +238,9 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                     ),
                                   ),
-                                  onPressed: () {},
+                                  onPressed: () async {
+                                    await handleGoogleSignIn();
+                                  },
                                   backgroundColor: const Color(0xFFFFFFFF),
                                 ),
                               ],
@@ -237,4 +248,30 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     )))));
   }
+
+  Future<Null> handleGoogleSignIn() async {
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser!.authentication;
+
+    final AuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final User? user = (await _auth.signInWithCredential(credential)).user;
+
+    DocumentReference ref = firestore.collection('users').doc(user!.uid);
+
+    ref.set({
+      'userid': user.uid,
+      'username': user.email,
+      'firstname': user.displayName,
+      'lastname': ""
+    });
+
+    widget.onSignIn(user);
+  }
+
+  Future<Null> handleFacebookSignIn() async {}
 }
