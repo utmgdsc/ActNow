@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
 
 class LoginPage extends StatefulWidget {
@@ -138,8 +139,14 @@ class _LoginPageState extends State<LoginPage> {
                                     Container(
                                       alignment: const Alignment(1.0, 0.0),
                                       padding: const EdgeInsets.only(top: 15.0),
-                                      child: const InkWell(
-                                        child: Text(
+                                      child: InkWell(
+                                        onTap: () {
+                                          Route route = MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const ForgotPasswordPage());
+                                          Navigator.push(context, route);
+                                        },
+                                        child: const Text(
                                           'Forgot Password?',
                                           style: TextStyle(
                                             color: Colors.blue,
