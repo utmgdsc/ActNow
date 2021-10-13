@@ -16,6 +16,6 @@ class ExplorePageState extends State<ExplorePage> {
     return Scaffold(
         body: Container(
             padding: const EdgeInsets.fromLTRB(150.0, 180.0, 0.0, 0.0),
-            child: const Text("Map Page")));
+            child: const Text("Explore Page")));
   }
 }

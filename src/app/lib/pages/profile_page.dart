@@ -21,15 +21,18 @@ class ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     double widthVariable = MediaQuery.of(context).size.width;
+    double heightVariable = MediaQuery.of(context).size.height;
+    double statusBarHeight = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      body: Column(
+        body: SingleChildScrollView(
+      child: Column(
         children: <Widget>[
           Container(
-              padding: const EdgeInsets.fromLTRB(0, 60.0, 0.0, 0.0),
+              padding: EdgeInsets.fromLTRB(0, statusBarHeight , 0.0, 0.0),
               child: Container(
                 color: Colors.blue,
-                height: 135,
+                height: heightVariable / 6,
                 width: widthVariable,
                 child: Row(
                   children: <Widget>[
@@ -39,7 +42,7 @@ class ProfilePageState extends State<ProfilePage> {
                       backgroundImage: AssetImage('assets/Logo.png'),
                     ),
                     SizedBox(
-                        width: 150,
+                        width: widthVariable / 3,
                         child: Stack(
                           children: <Widget>[
                             Container(
@@ -57,7 +60,7 @@ class ProfilePageState extends State<ProfilePage> {
                             ),
                           ],
                         )),
-                    const SizedBox(width: 30.0),
+                    const SizedBox(width: 30),
                     ElevatedButton(
                         onPressed: () {
                           widget.signOut();
@@ -73,38 +76,66 @@ class ProfilePageState extends State<ProfilePage> {
                 ),
               )),
           const SizedBox(height: 10.0),
-          const Center(
-            child: Text(
-              "Settings",
-              style: TextStyle(fontSize: 21),
-            ),
-          ),
+          SizedBox(
+              width: widthVariable,
+              child: const Center(
+                child: Text(
+                  "Settings",
+                  style: TextStyle(fontSize: 21),
+                ),
+              )),
           Container(
               margin: const EdgeInsets.all(10),
-              width: widthVariable,
-              decoration: const BoxDecoration(
-                  border: Border(
-                top: BorderSide(color: Colors.grey),
-              )),
-              child: Stack(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
-                    child: Text("ACCOUNT SETTINGS"),
+              child: DataTable(
+                decoration: const BoxDecoration(
+                    border: Border(
+                  top: BorderSide(color: Colors.grey),
+                )),
+                columns: const <DataColumn>[
+                  DataColumn(
+                    label: Text(
+                      'ACCOUNT SETTINGS',
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
                   ),
-                  Container(
-                    width: widthVariable,
-                    padding: const EdgeInsets.fromLTRB(0.0, 40.0, 0.0, 0.0),
-                    decoration: const BoxDecoration(
-                        border: Border(
-                      bottom: BorderSide(color: Colors.grey),
-                    )),
-                    child: Text("Personal Information"),
-                  )
                 ],
-              ))
+                rows: const <DataRow>[
+                  DataRow(
+                    cells: <DataCell>[DataCell(Text('Personal Information'))],
+                  ),
+                  DataRow(
+                    cells: <DataCell>[DataCell(Text('Notifcations'))],
+                  ),
+                  DataRow(
+                    cells: <DataCell>[DataCell(Text('Public account'))],
+                  ),
+                ],
+              )),
+          Container(
+              margin: const EdgeInsets.all(10),
+              child: DataTable(
+                columns: const <DataColumn>[
+                  DataColumn(
+                    label: Text(
+                      'SUPPORT',
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ),
+                ],
+                rows: const <DataRow>[
+                  DataRow(
+                    cells: <DataCell>[DataCell(Text('How to use ActNow'))],
+                  ),
+                  DataRow(
+                    cells: <DataCell>[DataCell(Text('Terms of Service'))],
+                  ),
+                  DataRow(
+                    cells: <DataCell>[DataCell(Text('Contact Us'))],
+                  ),
+                ],
+              )),
         ],
       ),
-    );
+    ));
   }
 }
