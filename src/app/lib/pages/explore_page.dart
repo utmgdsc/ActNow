@@ -4,8 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 class ExplorePage extends StatefulWidget {
   const ExplorePage({Key? key}) : super(key: key);
 
-  
-
   @override
   ExplorePageState createState() => ExplorePageState();
 }

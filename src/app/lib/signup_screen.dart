@@ -196,7 +196,7 @@ class _SignupPageState extends State<SignupPage> {
                               if (input == null || input.isEmpty) {
                                 return "Please enter a password";
                               }
-                              if(input != _userPassword.text) {
+                              if (input != _userPassword.text) {
                                 return "Passwords do not match";
                               }
                             },
