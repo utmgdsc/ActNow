@@ -1,5 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'personal_info.dart';
 
 class ProfilePage extends StatefulWidget {
   final User? userCreds;
@@ -18,18 +22,47 @@ class ProfilePage extends StatefulWidget {
 }
 
 class ProfilePageState extends State<ProfilePage> {
+  String? firstName;
+  String? lastName;
+
+  @override
+  void initState() {
+    super.initState();
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    firestore
+        .collection('users')
+        .doc(widget.userCreds!.uid)
+        .get()
+        .then((value) => {
+              setState(() {
+                lastName = value.data()!["lastname"];
+                firstName = value.data()!["firstname"];
+              })
+            });
+  }
+
   @override
   Widget build(BuildContext context) {
     double widthVariable = MediaQuery.of(context).size.width;
     double heightVariable = MediaQuery.of(context).size.height;
     double statusBarHeight = MediaQuery.of(context).padding.top;
 
+    if (lastName == null && firstName == null) {
+      return Scaffold(
+          body: SizedBox(
+        height: heightVariable ,
+        width: widthVariable,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ));
+    }
     return Scaffold(
         body: SingleChildScrollView(
       child: Column(
         children: <Widget>[
           Container(
-              padding: EdgeInsets.fromLTRB(0, statusBarHeight , 0.0, 0.0),
+              padding: EdgeInsets.fromLTRB(0, statusBarHeight, 0.0, 0.0),
               child: Container(
                 color: Colors.blue,
                 height: heightVariable / 6,
@@ -48,15 +81,15 @@ class ProfilePageState extends State<ProfilePage> {
                             Container(
                               padding: const EdgeInsets.fromLTRB(
                                   10.0, 0.0, 0.0, 0.0),
-                              child: const Text('Last Name',
-                                  style: TextStyle(
+                              child: Text(lastName ?? "",
+                                  style: const TextStyle(
                                       color: Colors.white, fontSize: 20.0)),
                             ),
                             Container(
                               padding: const EdgeInsets.fromLTRB(
                                   10.0, 30.0, 0.0, 0.0),
-                              child: const Text('First Name',
-                                  style: TextStyle(color: Colors.white)),
+                              child: Text(firstName ?? "",
+                                  style: const TextStyle(color: Colors.white)),
                             ),
                           ],
                         )),
@@ -99,14 +132,20 @@ class ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                 ],
-                rows: const <DataRow>[
+                rows: <DataRow>[
                   DataRow(
-                    cells: <DataCell>[DataCell(Text('Personal Information'))],
+                    cells: <DataCell>[
+                      DataCell(const Text('Personal Information'), onTap: () {
+                        Route route = MaterialPageRoute(
+                            builder: (context) => const PersonalInfo());
+                        Navigator.push(context, route);
+                      })
+                    ],
                   ),
-                  DataRow(
+                  const DataRow(
                     cells: <DataCell>[DataCell(Text('Notifcations'))],
                   ),
-                  DataRow(
+                  const DataRow(
                     cells: <DataCell>[DataCell(Text('Public account'))],
                   ),
                 ],
