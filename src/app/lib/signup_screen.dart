@@ -33,7 +33,7 @@ class _SignupPageState extends State<SignupPage> {
             .createUserWithEmailAndPassword(
                 email: _userEmail.text, password: _userPassword.text);
 
-        DocumentReference ref = firestore.collection('users').doc(userCreds.user!.uid);
+        DocumentReference ref = users.doc(userCreds.user!.uid);
 
         ref.set({
           'userid': userCreds.user!.uid,

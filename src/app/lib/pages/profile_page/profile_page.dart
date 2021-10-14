@@ -25,10 +25,10 @@ class ProfilePageState extends State<ProfilePage> {
   String? firstName;
   String? lastName;
   String? profileURL;
+  late Map<String, dynamic>? userInfo;
+  bool isSwitched = false;
 
-  @override
-  void initState() {
-    super.initState();
+  void updateInfo() {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     firestore
         .collection('users')
@@ -36,11 +36,19 @@ class ProfilePageState extends State<ProfilePage> {
         .get()
         .then((value) => {
               setState(() {
+                userInfo = value.data();
+                userInfo!["email"] = widget.userCreds!.email;
                 lastName = value.data()!["lastname"];
                 firstName = value.data()!["firstname"];
                 profileURL = value.data()!["profile_picture"];
               })
             });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    updateInfo();
   }
 
   @override
@@ -74,7 +82,8 @@ class ProfilePageState extends State<ProfilePage> {
                     const SizedBox(width: 20.0),
                     CircleAvatar(
                       radius: 44,
-                      backgroundImage: NetworkImage(profileURL ?? "https://profilepicturemaker.com/wp-content/themes/ppm2021/images/transparent.gif"),
+                      backgroundImage: NetworkImage(profileURL ??
+                          "https://profilepicturemaker.com/wp-content/themes/ppm2021/images/transparent.gif"),
                     ),
                     SizedBox(
                         width: widthVariable / 3,
@@ -120,7 +129,7 @@ class ProfilePageState extends State<ProfilePage> {
                 ),
               )),
           Container(
-              margin: const EdgeInsets.all(10),
+              margin: const EdgeInsets.fromLTRB(10, 10, 10, 0),
               child: DataTable(
                 decoration: const BoxDecoration(
                     border: Border(
@@ -139,21 +148,38 @@ class ProfilePageState extends State<ProfilePage> {
                     cells: <DataCell>[
                       DataCell(const Text('Personal Information'), onTap: () {
                         Route route = MaterialPageRoute(
-                            builder: (context) => const PersonalInfo());
-                        Navigator.push(context, route);
+                            builder: (context) =>
+                                PersonalInfo(userInfo: userInfo));
+                        Navigator.push(context, route)
+                            .then((value) => updateInfo());
                       })
                     ],
                   ),
                   const DataRow(
                     cells: <DataCell>[DataCell(Text('Notifcations'))],
                   ),
-                  const DataRow(
-                    cells: <DataCell>[DataCell(Text('Public account'))],
+                  DataRow(
+                    cells: <DataCell>[
+                      DataCell(
+                        Row(children: [
+                          const Text("Public Account"),
+                          Switch(
+                            value: isSwitched,
+                            onChanged: (value) {
+                              setState(() {
+                                isSwitched = value;
+                              });
+                            },
+                            activeColor: Colors.blue,
+                          )
+                        ]),
+                      )
+                    ],
                   ),
                 ],
               )),
           Container(
-              margin: const EdgeInsets.all(10),
+              margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
               child: DataTable(
                 columns: const <DataColumn>[
                   DataColumn(
