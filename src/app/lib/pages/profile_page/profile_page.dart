@@ -1,5 +1,5 @@
+import 'package:actnow/pages/profile_page/contact_us.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -24,6 +24,7 @@ class ProfilePage extends StatefulWidget {
 class ProfilePageState extends State<ProfilePage> {
   String? firstName;
   String? lastName;
+  String? profileURL;
 
   @override
   void initState() {
@@ -37,6 +38,7 @@ class ProfilePageState extends State<ProfilePage> {
               setState(() {
                 lastName = value.data()!["lastname"];
                 firstName = value.data()!["firstname"];
+                profileURL = value.data()!["profile_picture"];
               })
             });
   }
@@ -50,7 +52,7 @@ class ProfilePageState extends State<ProfilePage> {
     if (lastName == null && firstName == null) {
       return Scaffold(
           body: SizedBox(
-        height: heightVariable ,
+        height: heightVariable,
         width: widthVariable,
         child: const Center(
           child: CircularProgressIndicator(),
@@ -70,9 +72,9 @@ class ProfilePageState extends State<ProfilePage> {
                 child: Row(
                   children: <Widget>[
                     const SizedBox(width: 20.0),
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 44,
-                      backgroundImage: AssetImage('assets/Logo.png'),
+                      backgroundImage: NetworkImage(profileURL ?? "https://profilepicturemaker.com/wp-content/themes/ppm2021/images/transparent.gif"),
                     ),
                     SizedBox(
                         width: widthVariable / 3,
@@ -161,15 +163,21 @@ class ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                 ],
-                rows: const <DataRow>[
-                  DataRow(
+                rows: <DataRow>[
+                  const DataRow(
                     cells: <DataCell>[DataCell(Text('How to use ActNow'))],
                   ),
-                  DataRow(
+                  const DataRow(
                     cells: <DataCell>[DataCell(Text('Terms of Service'))],
                   ),
                   DataRow(
-                    cells: <DataCell>[DataCell(Text('Contact Us'))],
+                    cells: <DataCell>[
+                      DataCell(const Text('Contact Us'), onTap: () {
+                        Route route = MaterialPageRoute(
+                            builder: (context) => const ContactUs());
+                        Navigator.push(context, route);
+                      })
+                    ],
                   ),
                 ],
               )),
