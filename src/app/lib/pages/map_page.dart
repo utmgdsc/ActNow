@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({Key? key}) : super(key: key);
-
-  
 
   @override
   MapPageState createState() => MapPageState();
@@ -13,9 +12,10 @@ class MapPage extends StatefulWidget {
 class MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: Container(
-            padding: const EdgeInsets.fromLTRB(150.0, 180.0, 0.0, 0.0),
-            child: const Text("Map Page")));
+    return const Scaffold(
+        body: GoogleMap(
+            initialCameraPosition: CameraPosition(
+                target: LatLng(43.55103829955488, -79.66262838104547),
+                zoom: 15)));
   }
 }

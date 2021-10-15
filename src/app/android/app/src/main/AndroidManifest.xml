@@ -3,6 +3,8 @@
    <application
         android:label="ActNow"
         android:icon="@mipmap/ic_launcher">
+        <meta-data android:name="com.google.android.geo.API_KEY"
+               android:value="AIzaSyAXfUIU0H0eBvOoX73rB1_HJKiuZvd_eoQ"/>
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
