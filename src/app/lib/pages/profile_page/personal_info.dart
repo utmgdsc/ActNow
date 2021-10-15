@@ -18,18 +18,28 @@ class PersonalInfoState extends State<PersonalInfo> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   CollectionReference users = FirebaseFirestore.instance.collection('users');
 
-  final TextEditingController _firstName = TextEditingController();
-  final TextEditingController _lastName = TextEditingController();
-  final TextEditingController _email = TextEditingController();
+  late TextEditingController _firstName;
+  late TextEditingController _lastName;
+  late TextEditingController _email;
+
+  @override
+  void initState() {
+    super.initState();
+    _firstName = TextEditingController(text: widget.userInfo!["firstname"]);
+    _lastName = TextEditingController(text: widget.userInfo!["lastname"]);
+    _email = TextEditingController(text: widget.userInfo!["email"]);
+  }
 
   updateUserInfo(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       DocumentReference ref = users.doc(widget.userInfo!["userid"]);
 
-      if (_firstName != widget.userInfo!["firstname"]) {
+      if (_firstName.text.isNotEmpty &&
+          _firstName.text != widget.userInfo!["firstname"]) {
         ref.update({'firstname': _firstName.text});
       }
-      if (_lastName != widget.userInfo!["lastname"]) {
+      if (_lastName.text.isNotEmpty &&
+          _lastName != widget.userInfo!["lastname"]) {
         ref.update({'lastname': _lastName.text});
       }
 
@@ -54,8 +64,9 @@ class PersonalInfoState extends State<PersonalInfo> {
                     Container(
                         width: 130,
                         height: 130,
-                        child: const CircleAvatar(
-                          backgroundImage: NetworkImage(
+                        child: CircleAvatar(
+                          backgroundImage: NetworkImage(widget
+                                  .userInfo!["profile_picture"] ??
                               "https://profilepicturemaker.com/wp-content/themes/ppm2021/images/transparent.gif"),
                         ),
                         decoration: BoxDecoration(
@@ -104,29 +115,22 @@ class PersonalInfoState extends State<PersonalInfo> {
                           padding: const EdgeInsets.only(bottom: 35.0),
                           child: TextFormField(
                             controller: _firstName,
-                            decoration: InputDecoration(
-                                contentPadding:
-                                    const EdgeInsets.only(bottom: 3),
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(bottom: 3),
                                 labelText: "First Name",
                                 floatingLabelBehavior:
-                                    FloatingLabelBehavior.always,
-                                hintText: widget.userInfo!["firstname"],
-                                hintStyle: const TextStyle(
-                                  color: Colors.black,
-                                )),
+                                    FloatingLabelBehavior.always),
                           )),
                       Padding(
                           padding: const EdgeInsets.only(bottom: 35.0),
                           child: TextFormField(
                             controller: _lastName,
-                            decoration: InputDecoration(
-                                contentPadding:
-                                    const EdgeInsets.only(bottom: 3),
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(bottom: 3),
                                 labelText: "Last Name",
                                 floatingLabelBehavior:
                                     FloatingLabelBehavior.always,
-                                hintText: widget.userInfo!["lastname"],
-                                hintStyle: const TextStyle(
+                                hintStyle: TextStyle(
                                   color: Colors.black,
                                 )),
                           )),
@@ -145,16 +149,11 @@ class PersonalInfoState extends State<PersonalInfo> {
                               }
                             },
                             controller: _email,
-                            decoration: InputDecoration(
-                                contentPadding:
-                                    const EdgeInsets.only(bottom: 3),
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(bottom: 3),
                                 labelText: "Email",
                                 floatingLabelBehavior:
-                                    FloatingLabelBehavior.always,
-                                hintText: widget.userInfo!["email"],
-                                hintStyle: const TextStyle(
-                                  color: Colors.black,
-                                )),
+                                    FloatingLabelBehavior.always),
                           )),
                       buildTextField("Location", "Mississauga, ON"),
                     ],
