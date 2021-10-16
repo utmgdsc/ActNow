@@ -213,45 +213,28 @@ class _LoginPageState extends State<LoginPage> {
                           'Or connect using',
                         ),
                         const SizedBox(height: 20.0),
-                        Container(
-                            padding: const EdgeInsets.fromLTRB(0, 0, 0, 5),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                SignInButtonBuilder(
-                                  width: 118,
-                                  text: 'Facebook',
-                                  icon: Icons.facebook,
-                                  onPressed: () async {
-                                    await handleFacebookSignIn();
-                                  },
-                                  backgroundColor: const Color(0xFF3B5998),
-                                ),
-                                const SizedBox(width: 20.0),
-                                SignInButtonBuilder(
-                                  width: 118,
-                                  text: 'Google',
-                                  textColor:
-                                      const Color.fromRGBO(0, 0, 0, 0.54),
-                                  image: Container(
-                                    margin: const EdgeInsets.fromLTRB(
-                                        0.0, 0.0, 10.0, 0.0),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      child: const Image(
-                                        image: NetworkImage(
-                                            'https://developers.google.com/identity/images/g-logo.png'),
-                                        height: 20.0,
-                                      ),
-                                    ),
-                                  ),
-                                  onPressed: () async {
-                                    await handleGoogleSignIn();
-                                  },
-                                  backgroundColor: const Color(0xFFFFFFFF),
-                                ),
-                              ],
-                            )),
+                        SignInButtonBuilder(
+                          width: 180,
+                          height: 40.0,
+                          text: 'Google',
+                          textColor: const Color.fromRGBO(0, 0, 0, 0.54),
+                          image: Container(
+                            margin:
+                                const EdgeInsets.fromLTRB(26.0, 0.0, 10.0, 0.0),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0),
+                              child: const Image(
+                                image: NetworkImage(
+                                    'https://developers.google.com/identity/images/g-logo.png'),
+                                height: 20.0,
+                              ),
+                            ),
+                          ),
+                          onPressed: () async {
+                            await handleGoogleSignIn();
+                          },
+                          backgroundColor: const Color(0xFFFFFFFF),
+                        ),
                       ],
                     )))));
   }
