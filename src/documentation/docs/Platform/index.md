@@ -29,7 +29,7 @@ For now all our main work is in `functions/index.js` where you can find the code
 
 ![](../../static/img/cloud-functions.gif)
 
-*Note*: This options will **only** run the functions. So if you functions depends on other firebase tools, go to option 2.
+*Note*: Option 1 will **only** serve the cloud functions. So if you functions depends on other firebase tools, go to option 2.
 
 #### Option 2: Serve up all enabled firebase tools
 1. Go into `src/platform` and run `firebase emulators:start` to start a local firebase emulator with all the enabled firebase tools (currently we enabled cloud functions and firestore for local development)
