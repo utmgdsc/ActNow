@@ -39,6 +39,7 @@ dependencies:
   google_sign_in: ^5.1.1
   rxdart: ^0.27.2
   flutter_signin_button: any
+  google_maps_flutter: ^2.0.11
 
 dev_dependencies:
   flutter_test:
