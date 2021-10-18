@@ -1,7 +1,7 @@
-// ignore_for_file: prefer_const_constructors
-
+import 'package:actnow/pages/map_page/add_event.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'add_event.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -11,6 +11,7 @@ class MapPage extends StatefulWidget {
 }
 
 class MapPageState extends State<MapPage> {
+  
   Set<Marker> _markers = {};
 
   void _onMapCreated(GoogleMapController controller) {
@@ -18,7 +19,7 @@ class MapPageState extends State<MapPage> {
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
     setState(() {
       //here we could maybe loop through all our current events and add to map
-      _markers.add(Marker(
+      _markers.add(const Marker(
           markerId: MarkerId("event1"),
           position: LatLng(43.55103829955488, -79.66262838104547),
           infoWindow: InfoWindow(
@@ -29,12 +30,25 @@ class MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: GoogleMap(
-            onMapCreated: _onMapCreated,
-            markers: _markers,
-            initialCameraPosition: CameraPosition(
-                target: LatLng(43.55103829955488, -79.66262838104547),
-                zoom: 15)));
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Route route =
+              MaterialPageRoute(builder: (context) => const AddEvent());
+          Navigator.push(context, route);
+        },
+        child: const Icon(
+          Icons.add,
+          color: Colors.blue,
+        ),
+        backgroundColor: Colors.white,
+      ),
+      body: GoogleMap(
+          zoomControlsEnabled: false,
+          onMapCreated: _onMapCreated,
+          markers: _markers,
+          initialCameraPosition: const CameraPosition(
+              target: LatLng(43.55103829955488, -79.66262838104547), zoom: 15)),
+    );
   }
 }
 

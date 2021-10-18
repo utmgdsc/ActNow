@@ -1,0 +1,187 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+class AddEvent extends StatefulWidget {
+  const AddEvent({Key? key}) : super(key: key);
+
+  @override
+  AddEventState createState() => AddEventState();
+}
+
+class AddEventState extends State<AddEvent> {
+  final TextEditingController dateControl = TextEditingController();
+  final TextEditingController titleControl = TextEditingController();
+  final TextEditingController locationControl = TextEditingController();
+  final TextEditingController descControl = TextEditingController();
+  bool _enableBtn = false;
+  final GlobalKey<FormState> _formKey =
+      GlobalKey<FormState>(); // Required for form validator
+
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  CollectionReference users = FirebaseFirestore.instance.collection('events');
+
+  addEvent() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        User? userCreds = FirebaseAuth.instance.currentUser;
+        CollectionReference ref = firestore.collection('events').doc("custom").collection("mississauga");
+
+        ref.add({
+          'title': titleControl.text,
+          'location': locationControl.text,
+          'dateTime': dateControl.text,
+          'description': descControl.text
+        });
+
+      } catch (e) {
+        //
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double widthVariable = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+        appBar: AppBar(
+            leading: const BackButton(color: Colors.white),
+            backgroundColor: Colors.blue,
+            elevation: 0),
+        body: SingleChildScrollView(
+            child: Column(children: <Widget>[
+          Container(
+              color: Colors.grey[400],
+              child: Image(
+                height: 150,
+                width: widthVariable,
+                fit: BoxFit.cover,
+                image: const NetworkImage(
+                    "https://cdn2.wanderlust.co.uk/media/1037/forest-web.jpg?anchor=center&mode=crop&width=1200&height=0&rnd=132605629110000000"),
+              )),
+          Container(
+              padding: const EdgeInsets.only(top: 0.0, left: 20.0, right: 20.0),
+              child: Form(
+                  key: _formKey,
+                  onChanged: () => setState(() => {
+                        if (dateControl.text != "" &&
+                            titleControl.text != "" &&
+                            locationControl.text != "" &&
+                            descControl.text != "")
+                          {_enableBtn = true}
+                      }),
+                  child: Column(
+                    children: <Widget>[
+                      const SizedBox(height: 10.0),
+                      TextFormField(
+                        controller: titleControl,
+                        validator: (input) {
+                          if (input == null || input.isEmpty) {
+                            return "Please enter a Title";
+                          }
+                        },
+                        decoration: const InputDecoration(
+                            labelText: 'Title ',
+                            labelStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.green))),
+                      ),
+                      const SizedBox(height: 10.0),
+                      TextFormField(
+                        controller: locationControl,
+                        validator: (input) {
+                          if (input == null || input.isEmpty) {
+                            return "Enter a location";
+                          }
+                        },
+                        decoration: const InputDecoration(
+                            labelText: 'Location',
+                            labelStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.green))),
+                      ),
+                      const SizedBox(height: 10.0),
+                      TextFormField(
+                        controller: dateControl,
+                        onTap: () async {
+                          FocusScope.of(context).requestFocus(FocusNode());
+
+                          DateTime? date = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(1900),
+                              lastDate: DateTime(2100));
+
+                          TimeOfDay? time = await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.now(),
+                          );
+
+                          dateControl.text =
+                              DateFormat('EEEE, d MMM, yyyy').format(date!) +
+                                  " " +
+                                  time!.format(context) +
+                                  " " +
+                                  date.timeZoneName;
+                        },
+                        validator: (input) {
+                          if (input == null || input.isEmpty) {
+                            return "Enter a time and date";
+                          }
+                        },
+                        decoration: const InputDecoration(
+                            labelText: 'Time',
+                            labelStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.green))),
+                      ),
+                      const SizedBox(height: 10.0),
+                      TextFormField(
+                        controller: descControl,
+                        keyboardType: TextInputType.multiline,
+                        minLines: 6,
+                        maxLines: null,
+                        validator: (input) {
+                          if (input == null || input.isEmpty) {
+                            return "";
+                          }
+                        },
+                        decoration: const InputDecoration(
+                            alignLabelWithHint: true,
+                            labelText: 'Description',
+                            labelStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.green))),
+                      ),
+                      const SizedBox(height: 30.0),
+                      SizedBox(
+                          width: widthVariable,
+                          height: 40.0,
+                          child: Material(
+                            borderRadius: BorderRadius.circular(20.0),
+                            elevation: 7.0,
+                            child: ElevatedButton(
+                              style: _enableBtn
+                                  ? ElevatedButton.styleFrom(
+                                      primary: Colors.blue)
+                                  : ElevatedButton.styleFrom(
+                                      primary: Colors.grey),
+                              onPressed: _enableBtn ? () {
+                                addEvent();
+                              } : () {},
+                              child: const Center(
+                                child: Text(
+                                  'Save',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          )),
+                      const SizedBox(height: 20.0),
+                    ],
+                  ))),
+        ])));
+  }
+}

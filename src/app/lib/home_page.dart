@@ -1,8 +1,8 @@
-import 'package:actnow/pages/map_page.dart';
+import 'package:actnow/pages/map_page/map_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'pages/map_page.dart';
 import 'pages/profile_page/profile_page.dart';
+import 'pages/map_page/map_page.dart';
 import 'pages/explore_page.dart';
 import 'pages/saved_page.dart';
 
