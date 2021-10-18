@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class AddEvent extends StatefulWidget {
-  const AddEvent({Key? key}) : super(key: key);
+  final User? userCreds;
+  const AddEvent({Key? key, required this.userCreds}) : super(key: key);
 
   @override
   AddEventState createState() => AddEventState();
@@ -25,20 +26,45 @@ class AddEventState extends State<AddEvent> {
   addEvent() async {
     if (_formKey.currentState!.validate()) {
       try {
-        User? userCreds = FirebaseAuth.instance.currentUser;
-        CollectionReference ref = firestore.collection('events').doc("custom").collection("mississauga");
+        CollectionReference ref = firestore
+            .collection('events')
+            .doc("custom")
+            .collection("mississauga");
 
         ref.add({
           'title': titleControl.text,
           'location': locationControl.text,
           'dateTime': dateControl.text,
-          'description': descControl.text
+          'description': descControl.text,
+          'addedBy': widget.userCreds!.uid,
         });
 
+        showBox("Event Added Succesfully", "SUCCESS");
       } catch (e) {
-        //
+        showBox(e.toString(), "ERROR");
       }
     }
+  }
+
+  showBox(String? message, String? title) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title!),
+            content: Text(message!),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    if (title == "SUCCESS") {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: const Text('OK'))
+            ],
+          );
+        });
   }
 
   @override
@@ -53,14 +79,22 @@ class AddEventState extends State<AddEvent> {
         body: SingleChildScrollView(
             child: Column(children: <Widget>[
           Container(
-              color: Colors.grey[400],
-              child: Image(
-                height: 150,
-                width: widthVariable,
-                fit: BoxFit.cover,
-                image: const NetworkImage(
-                    "https://cdn2.wanderlust.co.uk/media/1037/forest-web.jpg?anchor=center&mode=crop&width=1200&height=0&rnd=132605629110000000"),
-              )),
+            width: widthVariable,
+            height: 150,
+            color: Colors.grey[400],
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(widthVariable / 1.2, 100, 0, 10),
+              child: FloatingActionButton(
+                mini: true,
+                onPressed: () {},
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.blue,
+                ),
+                backgroundColor: Colors.white,
+              ),
+            ),
+          ),
           Container(
               padding: const EdgeInsets.only(top: 0.0, left: 20.0, right: 20.0),
               child: Form(
@@ -168,9 +202,11 @@ class AddEventState extends State<AddEvent> {
                                       primary: Colors.blue)
                                   : ElevatedButton.styleFrom(
                                       primary: Colors.grey),
-                              onPressed: _enableBtn ? () {
-                                addEvent();
-                              } : () {},
+                              onPressed: _enableBtn
+                                  ? () {
+                                      addEvent();
+                                    }
+                                  : () {},
                               child: const Center(
                                 child: Text(
                                   'Save',

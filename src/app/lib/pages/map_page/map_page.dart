@@ -1,10 +1,12 @@
 import 'package:actnow/pages/map_page/add_event.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'add_event.dart';
 
 class MapPage extends StatefulWidget {
-  const MapPage({Key? key}) : super(key: key);
+  final User? userCreds;
+  const MapPage({Key? key, required this.userCreds}) : super(key: key);
 
   @override
   MapPageState createState() => MapPageState();
@@ -33,7 +35,7 @@ class MapPageState extends State<MapPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Route route =
-              MaterialPageRoute(builder: (context) => const AddEvent());
+              MaterialPageRoute(builder: (context) => AddEvent(userCreds: widget.userCreds,));
           Navigator.push(context, route);
         },
         child: const Icon(
