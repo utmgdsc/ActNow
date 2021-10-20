@@ -257,7 +257,8 @@ class _LoginPageState extends State<LoginPage> {
       'userid': user.uid,
       'username': user.email,
       'firstname': user.displayName,
-      'lastname': ""
+      'lastname': "",
+      'profile_picture': user.photoURL,
     });
 
     widget.onSignIn(user);
