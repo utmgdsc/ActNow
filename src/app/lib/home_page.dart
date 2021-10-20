@@ -25,16 +25,14 @@ class _HomePageState extends State<HomePage> {
   dynamic screens;
 
   int _selectedIndex = 0;
-  static const TextStyle optionStyle =
-      TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
 
   @override
   void initState() {
     super.initState();
     screens = [
       MapPage(userCreds: widget.userCreds),
-      ExplorePage(),
-      SavedPage(),
+      const ExplorePage(),
+      const SavedPage(),
       ProfilePage(userCreds: widget.userCreds, onSignOut: widget.onSignOut)
     ];
   }

@@ -1,7 +1,8 @@
-import 'package:actnow/pages/map_page/add_event.dart';
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
 import 'add_event.dart';
 
 class MapPage extends StatefulWidget {
@@ -13,10 +14,11 @@ class MapPage extends StatefulWidget {
 }
 
 class MapPageState extends State<MapPage> {
-  
-  Set<Marker> _markers = {};
+  final Set<Marker> _markers = {};
+  final Completer<GoogleMapController> _controller = Completer();
 
   void _onMapCreated(GoogleMapController controller) {
+    _controller.complete(controller);
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
     setState(() {
@@ -29,22 +31,61 @@ class MapPageState extends State<MapPage> {
     });
   }
 
+  void _currentLocation() async {
+    final GoogleMapController controller = await _controller.future;
+    LocationData? currentLocation;
+    var location = Location();
+    try {
+      currentLocation = await location.getLocation();
+    } on Exception {
+      currentLocation = null;
+    }
+
+    if (currentLocation != null) {
+      controller.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(
+          bearing: 0,
+          target: LatLng(currentLocation.latitude!, currentLocation.longitude!),
+          zoom: 17.0,
+        ),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Route route =
-              MaterialPageRoute(builder: (context) => AddEvent(userCreds: widget.userCreds,));
-          Navigator.push(context, route);
-        },
-        child: const Icon(
-          Icons.add,
-          color: Colors.blue,
+      floatingActionButton:
+          Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+        FloatingActionButton(
+          onPressed: () {
+            Route route = MaterialPageRoute(
+                builder: (context) => AddEvent(
+                      userCreds: widget.userCreds,
+                    ));
+            Navigator.push(context, route);
+          },
+          child: const Icon(
+            Icons.add,
+            color: Colors.blue,
+          ),
+          backgroundColor: Colors.white,
         ),
-        backgroundColor: Colors.white,
-      ),
+        const SizedBox(height: 15),
+        FloatingActionButton(
+          onPressed: () {
+            _currentLocation();
+          },
+          child: const Icon(
+            Icons.my_location,
+            color: Colors.blue,
+          ),
+          backgroundColor: Colors.white,
+        ),
+      ]),
       body: GoogleMap(
+          myLocationButtonEnabled: false,
+          myLocationEnabled: true,
           zoomControlsEnabled: false,
           onMapCreated: _onMapCreated,
           markers: _markers,
