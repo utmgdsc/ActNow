@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'add_event.dart';
@@ -31,6 +32,17 @@ class MapPageState extends State<MapPage> {
     });
   }
 
+  getLocationPermission() async {
+    var location = Location();
+    try {
+      location.requestPermission(); //to lunch location permission popup
+    } on PlatformException catch (e) {
+      if (e.code == 'PERMISSION_DENIED') {
+        //
+      }
+    }
+  }
+
   void _currentLocation() async {
     final GoogleMapController controller = await _controller.future;
     LocationData? currentLocation;
@@ -50,6 +62,12 @@ class MapPageState extends State<MapPage> {
         ),
       ));
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getLocationPermission();
   }
 
   @override
