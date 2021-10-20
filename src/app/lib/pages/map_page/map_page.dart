@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'add_event.dart';
@@ -32,42 +31,40 @@ class MapPageState extends State<MapPage> {
     });
   }
 
-  getLocationPermission() async {
-    var location = Location();
-    try {
-      location.requestPermission(); //to lunch location permission popup
-    } on PlatformException catch (e) {
-      if (e.code == 'PERMISSION_DENIED') {
-        //
-      }
-    }
-  }
-
   void _currentLocation() async {
     final GoogleMapController controller = await _controller.future;
     LocationData? currentLocation;
     var location = Location();
+    var serviceEnabled = await location.serviceEnabled();
+
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) {
+        return;
+      }
+    }
+
+    var permissionGranted = await location.hasPermission();
+
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await location.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+
     try {
       currentLocation = await location.getLocation();
     } on Exception {
       currentLocation = null;
     }
-
-    if (currentLocation != null) {
-      controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(
-          bearing: 0,
-          target: LatLng(currentLocation.latitude!, currentLocation.longitude!),
-          zoom: 17.0,
-        ),
-      ));
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    getLocationPermission();
+    controller.animateCamera(CameraUpdate.newCameraPosition(
+      CameraPosition(
+        bearing: 0,
+        target: LatLng(currentLocation!.latitude!, currentLocation.longitude!),
+        zoom: 17.0,
+      ),
+    ));
   }
 
   @override
