@@ -1,24 +1,29 @@
-// ignore_for_file: prefer_const_constructors
-
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
+import 'add_event.dart';
 
 class MapPage extends StatefulWidget {
-  const MapPage({Key? key}) : super(key: key);
+  final User? userCreds;
+  const MapPage({Key? key, required this.userCreds}) : super(key: key);
 
   @override
   MapPageState createState() => MapPageState();
 }
 
 class MapPageState extends State<MapPage> {
-  Set<Marker> _markers = {};
+  final Set<Marker> _markers = {};
+  final Completer<GoogleMapController> _controller = Completer();
 
   void _onMapCreated(GoogleMapController controller) {
+    _controller.complete(controller);
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
     setState(() {
       //here we could maybe loop through all our current events and add to map
-      _markers.add(Marker(
+      _markers.add(const Marker(
           markerId: MarkerId("event1"),
           position: LatLng(43.55103829955488, -79.66262838104547),
           infoWindow: InfoWindow(
@@ -26,15 +31,82 @@ class MapPageState extends State<MapPage> {
     });
   }
 
+  void _currentLocation() async {
+    final GoogleMapController controller = await _controller.future;
+    LocationData? currentLocation;
+    var location = Location();
+    var serviceEnabled = await location.serviceEnabled();
+
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) {
+        return;
+      }
+    }
+
+    var permissionGranted = await location.hasPermission();
+
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await location.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+
+    try {
+      currentLocation = await location.getLocation();
+    } on Exception {
+      currentLocation = null;
+    }
+    controller.animateCamera(CameraUpdate.newCameraPosition(
+      CameraPosition(
+        bearing: 0,
+        target: LatLng(currentLocation!.latitude!, currentLocation.longitude!),
+        zoom: 17.0,
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: GoogleMap(
-            onMapCreated: _onMapCreated,
-            markers: _markers,
-            initialCameraPosition: CameraPosition(
-                target: LatLng(43.55103829955488, -79.66262838104547),
-                zoom: 15)));
+      floatingActionButton:
+          Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+        FloatingActionButton(
+          onPressed: () {
+            Route route = MaterialPageRoute(
+                builder: (context) => AddEvent(
+                      userCreds: widget.userCreds,
+                    ));
+            Navigator.push(context, route);
+          },
+          child: const Icon(
+            Icons.add,
+            color: Colors.blue,
+          ),
+          backgroundColor: Colors.white,
+        ),
+        const SizedBox(height: 15),
+        FloatingActionButton(
+          onPressed: () {
+            _currentLocation();
+          },
+          child: const Icon(
+            Icons.my_location,
+            color: Colors.blue,
+          ),
+          backgroundColor: Colors.white,
+        ),
+      ]),
+      body: GoogleMap(
+          myLocationButtonEnabled: false,
+          myLocationEnabled: true,
+          zoomControlsEnabled: false,
+          onMapCreated: _onMapCreated,
+          markers: _markers,
+          initialCameraPosition: const CameraPosition(
+              target: LatLng(43.55103829955488, -79.66262838104547), zoom: 15)),
+    );
   }
 }
 
