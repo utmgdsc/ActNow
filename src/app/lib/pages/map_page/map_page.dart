@@ -133,9 +133,9 @@ class MapPageState extends State<MapPage> {
                           formDetail: formDetails,
                         ));
                 Navigator.push(context, route).then((value) => {
-                      print(value),
                       if (value == "Added")
                         {
+                          formDetails = {},
                           setState(() {
                             clearAddedMarker();
                           })
