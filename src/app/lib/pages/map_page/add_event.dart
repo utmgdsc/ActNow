@@ -1,11 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 
 class AddEvent extends StatefulWidget {
   final User? userCreds;
-  const AddEvent({Key? key, required this.userCreds}) : super(key: key);
+  final LatLng? droppedPin;
+  const AddEvent({Key? key, required this.userCreds, required this.droppedPin})
+      : super(key: key);
 
   @override
   AddEventState createState() => AddEventState();
@@ -14,7 +18,6 @@ class AddEvent extends StatefulWidget {
 class AddEventState extends State<AddEvent> {
   final TextEditingController dateControl = TextEditingController();
   final TextEditingController titleControl = TextEditingController();
-  final TextEditingController locationControl = TextEditingController();
   final TextEditingController descControl = TextEditingController();
   bool _enableBtn = false;
   final GlobalKey<FormState> _formKey =
@@ -22,6 +25,14 @@ class AddEventState extends State<AddEvent> {
 
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   CollectionReference users = FirebaseFirestore.instance.collection('events');
+
+  TextEditingController? locationControl = null;
+
+  @override
+  void initState() {
+    super.initState();
+    getUserLocation(widget.droppedPin);
+  }
 
   addEvent() async {
     if (_formKey.currentState!.validate()) {
@@ -33,7 +44,9 @@ class AddEventState extends State<AddEvent> {
 
         ref.add({
           'title': titleControl.text,
-          'location': locationControl.text,
+          'location': locationControl!.text,
+          'latitude': widget.droppedPin!.latitude,
+          'longitude': widget.droppedPin!.longitude,
           'dateTime': dateControl.text,
           'description': descControl.text,
           'addedBy': widget.userCreds!.uid,
@@ -44,6 +57,18 @@ class AddEventState extends State<AddEvent> {
         showBox(e.toString(), "ERROR");
       }
     }
+  }
+
+  getUserLocation(LatLng? position) async {
+    List<Placemark> placemarks =
+        await placemarkFromCoordinates(position!.latitude, position.longitude);
+
+    String? locationString = placemarks[0].street!;
+    print(placemarks[0]);
+
+    setState(() {
+      locationControl = TextEditingController(text: locationString);
+    });
   }
 
   showBox(String? message, String? title) {
@@ -85,6 +110,7 @@ class AddEventState extends State<AddEvent> {
             child: Padding(
               padding: EdgeInsets.fromLTRB(widthVariable / 1.2, 100, 0, 10),
               child: FloatingActionButton(
+                heroTag: "btn2",
                 mini: true,
                 onPressed: () {},
                 child: const Icon(
@@ -102,7 +128,7 @@ class AddEventState extends State<AddEvent> {
                   onChanged: () => setState(() => {
                         if (dateControl.text != "" &&
                             titleControl.text != "" &&
-                            locationControl.text != "" &&
+                            locationControl!.text != "" &&
                             descControl.text != "")
                           {_enableBtn = true}
                       }),
@@ -125,6 +151,7 @@ class AddEventState extends State<AddEvent> {
                       const SizedBox(height: 10.0),
                       TextFormField(
                         controller: locationControl,
+                        onTap: () async {},
                         validator: (input) {
                           if (input == null || input.isEmpty) {
                             return "Enter a location";

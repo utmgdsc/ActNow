@@ -16,19 +16,13 @@ class MapPage extends StatefulWidget {
 class MapPageState extends State<MapPage> {
   final Set<Marker> _markers = {};
   final Completer<GoogleMapController> _controller = Completer();
+  late LatLng droppedIn;
+  bool disableAddEvent = false;
 
   void _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
-    setState(() {
-      //here we could maybe loop through all our current events and add to map
-      _markers.add(const Marker(
-          markerId: MarkerId("event1"),
-          position: LatLng(43.55103829955488, -79.66262838104547),
-          infoWindow: InfoWindow(
-              title: "Event number 1", snippet: "event number 1 description")));
-    });
   }
 
   void _currentLocation() async {
@@ -67,16 +61,37 @@ class MapPageState extends State<MapPage> {
     ));
   }
 
+  void handleTap(LatLng tappedPosition) {
+    setState(() {
+      //here we could maybe loop through all our current events and add to map
+      _markers.add(Marker(
+          markerId: const MarkerId("New Event"), position: tappedPosition));
+
+      droppedIn = tappedPosition;
+      disableAddEvent = true;
+    });
+  }
+
+  void clearAddedMarker(LatLng tappedPosition) {
+    MarkerId _markerId = const MarkerId("New Event");
+    setState(() {
+      _markers.remove(_markerId);
+      disableAddEvent = false;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton:
           Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-        FloatingActionButton(
+        Visibility(
+          visible: disableAddEvent,
+          child: FloatingActionButton(
+          heroTag: "btn2",
           onPressed: () {
             Route route = MaterialPageRoute(
                 builder: (context) => AddEvent(
-                      userCreds: widget.userCreds,
+                      userCreds: widget.userCreds, droppedPin: droppedIn,
                     ));
             Navigator.push(context, route);
           },
@@ -85,7 +100,7 @@ class MapPageState extends State<MapPage> {
             color: Colors.blue,
           ),
           backgroundColor: Colors.white,
-        ),
+        )),
         const SizedBox(height: 15),
         FloatingActionButton(
           onPressed: () {
@@ -104,6 +119,7 @@ class MapPageState extends State<MapPage> {
           zoomControlsEnabled: false,
           onMapCreated: _onMapCreated,
           markers: _markers,
+          onTap: handleTap,
           initialCameraPosition: const CameraPosition(
               target: LatLng(43.55103829955488, -79.66262838104547), zoom: 15)),
     );
