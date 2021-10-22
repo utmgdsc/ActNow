@@ -8,7 +8,12 @@ import 'package:intl/intl.dart';
 class AddEvent extends StatefulWidget {
   final User? userCreds;
   final LatLng? droppedPin;
-  const AddEvent({Key? key, required this.userCreds, required this.droppedPin})
+  final Map? formDetail;
+  const AddEvent(
+      {Key? key,
+      required this.userCreds,
+      required this.droppedPin,
+      this.formDetail})
       : super(key: key);
 
   @override
@@ -16,9 +21,10 @@ class AddEvent extends StatefulWidget {
 }
 
 class AddEventState extends State<AddEvent> {
-  final TextEditingController dateControl = TextEditingController();
-  final TextEditingController titleControl = TextEditingController();
-  final TextEditingController descControl = TextEditingController();
+  late TextEditingController dateControl;
+  late TextEditingController titleControl;
+  late TextEditingController descControl;
+  String? streetAddress;
   bool _enableBtn = false;
   final GlobalKey<FormState> _formKey =
       GlobalKey<FormState>(); // Required for form validator
@@ -26,11 +32,15 @@ class AddEventState extends State<AddEvent> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   CollectionReference users = FirebaseFirestore.instance.collection('events');
 
-  TextEditingController? locationControl = null;
+  TextEditingController? locationControl;
 
   @override
   void initState() {
     super.initState();
+    dateControl = TextEditingController(text: widget.formDetail!["date"] ?? "");
+    titleControl =
+        TextEditingController(text: widget.formDetail!["title"] ?? "");
+    descControl = TextEditingController(text: widget.formDetail!["desc"] ?? "");
     getUserLocation(widget.droppedPin);
   }
 
@@ -44,12 +54,12 @@ class AddEventState extends State<AddEvent> {
 
         ref.add({
           'title': titleControl.text,
-          'location': locationControl!.text,
+          'location': streetAddress,
           'latitude': widget.droppedPin!.latitude,
           'longitude': widget.droppedPin!.longitude,
           'dateTime': dateControl.text,
           'description': descControl.text,
-          'addedBy': widget.userCreds!.uid,
+          'createdBy': widget.userCreds!.uid,
         });
 
         showBox("Event Added Succesfully", "SUCCESS");
@@ -63,8 +73,14 @@ class AddEventState extends State<AddEvent> {
     List<Placemark> placemarks =
         await placemarkFromCoordinates(position!.latitude, position.longitude);
 
-    String? locationString = placemarks[0].street!;
-    print(placemarks[0]);
+    String? locationString = placemarks[0].name!;
+    streetAddress = placemarks[0].street! +
+        ", " +
+        placemarks[0].locality! +
+        ", " +
+        placemarks[0].administrativeArea! +
+        ", " +
+        placemarks[0].postalCode!;
 
     setState(() {
       locationControl = TextEditingController(text: locationString);
@@ -83,7 +99,7 @@ class AddEventState extends State<AddEvent> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     if (title == "SUCCESS") {
-                      Navigator.of(context).pop();
+                      Navigator.of(context).pop("Added");
                     }
                   },
                   child: const Text('OK'))
@@ -151,7 +167,14 @@ class AddEventState extends State<AddEvent> {
                       const SizedBox(height: 10.0),
                       TextFormField(
                         controller: locationControl,
-                        onTap: () async {},
+                        onTap: () async {
+                          FocusScope.of(context).requestFocus(FocusNode());
+                          Navigator.of(context).pop({
+                            "title": titleControl.text,
+                            "desc": descControl.text,
+                            "date": dateControl.text,
+                          });
+                        },
                         validator: (input) {
                           if (input == null || input.isEmpty) {
                             return "Enter a location";
