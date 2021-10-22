@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:google_geocoding/google_geocoding.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:io';
 
 class AddEvent extends StatefulWidget {
   final User? userCreds;
@@ -71,17 +72,22 @@ class AddEventState extends State<AddEvent> {
   }
 
   getUserLocation(LatLng? position) async {
-    var googleGeocoding = GoogleGeocoding(dotenv.env["API_KEY"]!);
+    late GoogleGeocoding googleGeocoding;
+    if (Platform.isAndroid) {
+      googleGeocoding = GoogleGeocoding(dotenv.env["API_KEY_ANDRIOD"]!);
+    } else if (Platform.isIOS) {
+      googleGeocoding = GoogleGeocoding(dotenv.env["API_KEY_IOS"]!);
+    }
     var result = await googleGeocoding.geocoding
         .getReverse(LatLon(position!.latitude, position.longitude));
 
     String? locationString;
-    List<String> splitAddress =  result!.results![0].formattedAddress!.split(',');
-    
-    if(splitAddress.length >= 5) {
+    List<String> splitAddress =
+        result!.results![0].formattedAddress!.split(',');
+
+    if (splitAddress.length >= 5) {
       locationString = splitAddress[0] + splitAddress[1];
-    }
-    else {
+    } else {
       locationString = splitAddress[0];
     }
     streetAddress = result.results![0].formattedAddress;
