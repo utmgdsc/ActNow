@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:google_geocoding/google_geocoding.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AddEvent extends StatefulWidget {
   final User? userCreds;
@@ -70,17 +71,20 @@ class AddEventState extends State<AddEvent> {
   }
 
   getUserLocation(LatLng? position) async {
-    List<Placemark> placemarks =
-        await placemarkFromCoordinates(position!.latitude, position.longitude);
+    var googleGeocoding = GoogleGeocoding(dotenv.env["API_KEY"]!);
+    var result = await googleGeocoding.geocoding
+        .getReverse(LatLon(position!.latitude, position.longitude));
 
-    String? locationString = placemarks[0].name!;
-    streetAddress = placemarks[0].street! +
-        ", " +
-        placemarks[0].locality! +
-        ", " +
-        placemarks[0].administrativeArea! +
-        ", " +
-        placemarks[0].postalCode!;
+    String? locationString;
+    List<String> splitAddress =  result!.results![0].formattedAddress!.split(',');
+    
+    if(splitAddress.length >= 5) {
+      locationString = splitAddress[0] + splitAddress[1];
+    }
+    else {
+      locationString = splitAddress[0];
+    }
+    streetAddress = result.results![0].formattedAddress;
 
     setState(() {
       locationControl = TextEditingController(text: locationString);
