@@ -36,6 +36,14 @@ class AddEventState extends State<AddEvent> {
 
   TextEditingController? locationControl;
 
+  void checkButtonStatus() {
+    if (dateControl.text != "" &&
+        titleControl.text != "" &&
+        descControl.text != "") {
+      _enableBtn = true;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +52,9 @@ class AddEventState extends State<AddEvent> {
         TextEditingController(text: widget.formDetail!["title"] ?? "");
     descControl = TextEditingController(text: widget.formDetail!["desc"] ?? "");
     getUserLocation(widget.droppedPin);
+    setState(() {
+      checkButtonStatus();
+    });
   }
 
   addEvent() async {
@@ -152,11 +163,7 @@ class AddEventState extends State<AddEvent> {
               child: Form(
                   key: _formKey,
                   onChanged: () => setState(() => {
-                        if (dateControl.text != "" &&
-                            titleControl.text != "" &&
-                            locationControl!.text != "" &&
-                            descControl.text != "")
-                          {_enableBtn = true}
+                        checkButtonStatus()
                       }),
                   child: Column(
                     children: <Widget>[
