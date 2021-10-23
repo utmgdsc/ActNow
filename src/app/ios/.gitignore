@@ -27,6 +27,7 @@ ServiceDefinitions.json
 Runner/GeneratedPluginRegistrant.*
 build/
 GoogleService-Info.plist
+Runner/Info.plist
 
 # Exceptions to above rules.
 !default.mode1v3
