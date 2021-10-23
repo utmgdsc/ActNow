@@ -92,14 +92,14 @@ class ProfilePageState extends State<ProfilePage> {
                             Container(
                               padding: const EdgeInsets.fromLTRB(
                                   10.0, 0.0, 0.0, 0.0),
-                              child: Text(lastName ?? "",
+                              child: Text(firstName ?? "",
                                   style: const TextStyle(
                                       color: Colors.white, fontSize: 20.0)),
                             ),
                             Container(
                               padding: const EdgeInsets.fromLTRB(
                                   10.0, 30.0, 0.0, 0.0),
-                              child: Text(firstName ?? "",
+                              child: Text(lastName ?? "",
                                   style: const TextStyle(color: Colors.white)),
                             ),
                           ],
