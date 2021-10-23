@@ -19,6 +19,7 @@ jobs:
       run:
         working-directory: ./src/app
     name: Create env file
+    steps:
     - run: touch ./assets/.env
     name: Running tests
     runs-on: ubuntu-latest
