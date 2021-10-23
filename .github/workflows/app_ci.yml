@@ -18,9 +18,6 @@ jobs:
     defaults:
       run:
         working-directory: ./src/app
-    name: Create env file
-    steps:
-    - run: touch ./assets/.env
     name: Running tests
     runs-on: ubuntu-latest
     steps:
@@ -31,5 +28,6 @@ jobs:
     - uses: subosito/flutter-action@v1
       with:
         flutter-version: '2.5.2'
+    - run: touch ./assets/.env
     - run: flutter pub get
     - run: flutter test
