@@ -14,21 +14,27 @@ class MapPage extends StatefulWidget {
 }
 
 class MapPageState extends State<MapPage> {
-  final Set<Marker> _markers = {};
+  Map<String, String> formDetails = {};
+  bool allEventsRead = false;
+  final List<Marker> _markers = [];
   final Completer<GoogleMapController> _controller = Completer();
+  late LatLng droppedIn;
+  bool disableAddEvent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getAllEvents();
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
-    setState(() {
-      //here we could maybe loop through all our current events and add to map
-      _markers.add(const Marker(
-          markerId: MarkerId("event1"),
-          position: LatLng(43.55103829955488, -79.66262838104547),
-          infoWindow: InfoWindow(
-              title: "Event number 1", snippet: "event number 1 description")));
-    });
+  }
+
+  void getAllEvents() {
+    allEventsRead = true;
   }
 
   void _currentLocation() async {
@@ -67,25 +73,95 @@ class MapPageState extends State<MapPage> {
     ));
   }
 
+  void addMarker(LatLng tappedPosition) {
+    setState(() {
+      //here we could maybe loop through all our current events and add to map
+      droppedIn = tappedPosition;
+      _markers.add(Marker(
+          markerId: const MarkerId("New Event"),
+          position: tappedPosition,
+          draggable: true,
+          onDragEnd: (dragPos) {
+            droppedIn = dragPos;
+          }));
+
+      disableAddEvent = true;
+    });
+  }
+
+  void handleTap(LatLng tappedPosition) {
+    if (_markers.isEmpty) {
+      addMarker(tappedPosition);
+    } else if (_markers.remove(_markers.last)) {
+      addMarker(tappedPosition);
+    }
+  }
+
+  void clearAddedMarker() {
+    _markers.remove(_markers.last);
+    disableAddEvent = false;
+    allEventsRead = true;
+  }
+
   @override
   Widget build(BuildContext context) {
+    double widthVariable = MediaQuery.of(context).size.width;
+    double heightVariable = MediaQuery.of(context).size.height;
+
+    if (allEventsRead == false) {
+      return Scaffold(
+          body: SizedBox(
+        height: heightVariable,
+        width: widthVariable,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ));
+    }
     return Scaffold(
       floatingActionButton:
           Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-        FloatingActionButton(
-          onPressed: () {
-            Route route = MaterialPageRoute(
-                builder: (context) => AddEvent(
-                      userCreds: widget.userCreds,
-                    ));
-            Navigator.push(context, route);
-          },
-          child: const Icon(
-            Icons.add,
-            color: Colors.blue,
-          ),
-          backgroundColor: Colors.white,
-        ),
+        Visibility(
+            visible: disableAddEvent,
+            child: FloatingActionButton(
+              heroTag: "btn2",
+              onPressed: () {
+                Route route = MaterialPageRoute(
+                    builder: (context) => AddEvent(
+                          userCreds: widget.userCreds,
+                          droppedPin: droppedIn,
+                          formDetail: formDetails,
+                        ));
+                Navigator.push(context, route).then((value) => {
+                      if (value == "Added")
+                        {
+                          formDetails = {},
+                          setState(() {
+                            clearAddedMarker();
+                          })
+                        }
+                      else if (value != null)
+                        {
+                          formDetails = value,
+                        }
+                      else
+                        {
+                          formDetails = {},
+                          if (_markers.remove(_markers.last))
+                            {
+                              setState(() {
+                                disableAddEvent = false;
+                              })
+                            }
+                        }
+                    });
+              },
+              child: const Icon(
+                Icons.add,
+                color: Colors.blue,
+              ),
+              backgroundColor: Colors.white,
+            )),
         const SizedBox(height: 15),
         FloatingActionButton(
           onPressed: () {
@@ -103,7 +179,8 @@ class MapPageState extends State<MapPage> {
           myLocationEnabled: true,
           zoomControlsEnabled: false,
           onMapCreated: _onMapCreated,
-          markers: _markers,
+          markers: Set<Marker>.of(_markers),
+          onTap: handleTap,
           initialCameraPosition: const CameraPosition(
               target: LatLng(43.55103829955488, -79.66262838104547), zoom: 15)),
     );
