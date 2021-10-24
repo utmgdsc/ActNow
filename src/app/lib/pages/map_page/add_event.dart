@@ -23,6 +23,7 @@ class AddEvent extends StatefulWidget {
 }
 
 class AddEventState extends State<AddEvent> {
+  String? userAddress;
   late TextEditingController dateControl;
   late TextEditingController titleControl;
   late TextEditingController descControl;
@@ -63,7 +64,7 @@ class AddEventState extends State<AddEvent> {
         CollectionReference ref = firestore
             .collection('events')
             .doc("custom")
-            .collection("mississauga");
+            .collection(userAddress!);
 
         ref.add({
           'title': titleControl.text,
@@ -98,8 +99,10 @@ class AddEventState extends State<AddEvent> {
 
     if (splitAddress.length >= 5) {
       locationString = splitAddress[0] + splitAddress[1];
+      userAddress = splitAddress[2];
     } else {
       locationString = splitAddress[0];
+      userAddress = splitAddress[1];
     }
     streetAddress = result.results![0].formattedAddress;
 
@@ -162,9 +165,7 @@ class AddEventState extends State<AddEvent> {
               padding: const EdgeInsets.only(top: 0.0, left: 20.0, right: 20.0),
               child: Form(
                   key: _formKey,
-                  onChanged: () => setState(() => {
-                        checkButtonStatus()
-                      }),
+                  onChanged: () => setState(() => {checkButtonStatus()}),
                   child: Column(
                     children: <Widget>[
                       const SizedBox(height: 10.0),
