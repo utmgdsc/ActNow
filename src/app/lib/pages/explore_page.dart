@@ -14,16 +14,36 @@ class ExplorePageState extends State<ExplorePage> {
     return Scaffold(
         body: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Column(
               children: [
-                event_widget(
-                  title: "test title",
-                  creator: "test creator",
-                  date_time: DateTime.now(),
-                  num_attendees: 23,
-                  img: "aaa",
-                )
+                Expanded(
+                  child: ListView(
+                    children: [
+                      event_widget(
+                        title: "test title",
+                        creator: "test creator 232",
+                        date_time: DateTime.now(),
+                        num_attendees: 23,
+                      ),
+                      event_widget(
+                        title: "test title",
+                        creator: "test creator",
+                        date_time: DateTime.now(),
+                        num_attendees: 223,
+                        img_location: 'https://i.imgur.com/jaPAgQH.jpeg',
+                      ),
+                      event_widget(
+                        title: "test title",
+                        creator: "test creator 4251255",
+                        date_time: DateTime.now(),
+                        num_attendees: 23,
+                        img_location:
+                            'https://img.bleacherreport.net/img/images/photos/003/813/911/hi-res-76dc39978a7762c48eab1955cb58d65f_crop_north.jpg?1560490545&w=3072&h=2048',
+                      )
+                    ],
+                  ),
+                ),
               ],
             )));
   }
