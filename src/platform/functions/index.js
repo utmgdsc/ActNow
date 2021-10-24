@@ -1,6 +1,7 @@
 const functions = require('firebase-functions');
 const puppeteer = require('puppeteer');
 const admin = require('firebase-admin');
+const { firestore } = require('firebase-admin');
 
 admin.initializeApp();
 
@@ -8,7 +9,7 @@ const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 exports.scrapeEventbrite = functions
   .runWith({
-    timeoutSeconds: 30,
+    timeoutSeconds: 90,
     memory: '1GB',
   })
   .https.onRequest(async (_, res) => {
@@ -23,8 +24,34 @@ exports.scrapeEventbrite = functions
       height: 1080,
     });
 
+    // get request as a parameter from the url
+    let city = '';
+    if (_.method === 'GET') {
+      if (_.query.city.length !== 0 && typeof _.query.city !== 'undefined') {
+        city = _.query.city;
+        functions.logger.info('City: ' + city);
+      } else {
+        functions.logger.error('No city name provided');
+        res.send('Please provide a city/town name');
+      }
+    }
+
+    // this is my futile attempt to prevent it from pushing events for the same city :(
+    // const collectionExists = admin
+    //   .firestore()
+    //   .collection('events')
+    //   .doc('eventbrite')
+    //   .collection(city)
+    //   .limit(1)
+    //   .get();
+
+    // if (!collectionExists.empty) {
+    //   res.send('Scraped Events already exist for this city');
+    //   functions.logger.error('Scraped Events already exist for this city');
+    // }
+
     await page.goto(webpageUrl, { waitUntil: 'networkidle2' });
-    await page.type('#locationPicker', 'Toronto');
+    await page.type('#locationPicker', city);
     await page.keyboard.press('Enter');
     await timeout(2000);
 
@@ -91,7 +118,7 @@ exports.scrapeEventbrite = functions
           .firestore()
           .collection('events')
           .doc('eventbrite')
-          .collection('toronto')
+          .collection(city)
           .add(event);
       })();
     });
