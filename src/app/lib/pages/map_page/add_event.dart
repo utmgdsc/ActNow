@@ -66,7 +66,7 @@ class AddEventState extends State<AddEvent> {
             .doc("custom")
             .collection(userAddress!);
 
-        ref.add({
+        await ref.add({
           'title': titleControl.text,
           'location': streetAddress,
           'latitude': widget.droppedPin!.latitude,
@@ -99,10 +99,14 @@ class AddEventState extends State<AddEvent> {
 
     if (splitAddress.length >= 5) {
       locationString = splitAddress[0] + splitAddress[1];
-      userAddress = splitAddress[2];
+      userAddress = splitAddress[2].trim();
+    } else if (splitAddress.length == 3) {
+      var formatAddress = splitAddress[0].split(" ")[1];
+      locationString = formatAddress;
+      userAddress = formatAddress.trim();
     } else {
       locationString = splitAddress[0];
-      userAddress = splitAddress[1];
+      userAddress = splitAddress[1].trim();
     }
     streetAddress = result.results![0].formattedAddress;
 
@@ -122,7 +126,8 @@ class AddEventState extends State<AddEvent> {
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    if (title == "SUCCESS") {
+                    FocusScope.of(context).unfocus();
+                    if (title == "SUCCESS") {   
                       Navigator.of(context).pop("Added");
                     }
                   },

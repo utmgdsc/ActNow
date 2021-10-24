@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -14,6 +15,7 @@ class MapPage extends StatefulWidget {
 }
 
 class MapPageState extends State<MapPage> {
+  bool addedNewEvent = false;
   Map<String, String> formDetails = {};
   bool allEventsRead = false;
   final List<Marker> _markers = [];
@@ -28,13 +30,38 @@ class MapPageState extends State<MapPage> {
   }
 
   void _onMapCreated(GoogleMapController controller) {
-    _controller.complete(controller);
+    if (!_controller.isCompleted) {
+      _controller.complete(controller);
+    }
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
   }
 
-  void getAllEvents() {
-    allEventsRead = true;
+  Future<void> getAllEvents() async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    await firestore
+        .collection('events')
+        .doc("custom")
+        .collection("Mississauga")
+        .get()
+        .then((value) => {
+              value.docs.forEach((element) {
+                var pos = LatLng(element["latitude"], element["longitude"]);
+                var markerToAdd = Marker(
+                    markerId: MarkerId(pos.toString()),
+                    position: pos,
+                    draggable: true,
+                    onDragEnd: (dragPos) {
+                      droppedIn = dragPos;
+                    });
+                if (!_markers.contains(markerToAdd)) {
+                  _markers.add(markerToAdd);
+                }
+              }),
+              setState(() {
+                allEventsRead = true;
+              })
+            });
   }
 
   void _currentLocation() async {
@@ -90,17 +117,18 @@ class MapPageState extends State<MapPage> {
   }
 
   void handleTap(LatLng tappedPosition) {
-    if (_markers.isEmpty) {
+    if (addedNewEvent == false) {
       addMarker(tappedPosition);
-    } else if (_markers.remove(_markers.last)) {
+      addedNewEvent = true;
+    } else if (addedNewEvent = true && _markers.remove(_markers.last)) {
       addMarker(tappedPosition);
     }
   }
 
   void clearAddedMarker() {
     _markers.remove(_markers.last);
+    addedNewEvent = false;
     disableAddEvent = false;
-    allEventsRead = true;
   }
 
   @override
@@ -136,9 +164,8 @@ class MapPageState extends State<MapPage> {
                       if (value == "Added")
                         {
                           formDetails = {},
-                          setState(() {
-                            clearAddedMarker();
-                          })
+                          clearAddedMarker(),
+                          getAllEvents(),
                         }
                       else if (value != null)
                         {
@@ -150,6 +177,7 @@ class MapPageState extends State<MapPage> {
                           if (_markers.remove(_markers.last))
                             {
                               setState(() {
+                                addedNewEvent = false;
                                 disableAddEvent = false;
                               })
                             }
