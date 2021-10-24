@@ -21,34 +21,45 @@ class event_widget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        height: 300,
         decoration: BoxDecoration(
-            color: Colors.amber[100],
+            color: Colors.green[100],
             borderRadius: BorderRadius.circular(10.0)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title ?? ("Error: Missing Title"),
-              style: TextStyle(fontSize: 18.0, color: Colors.black),
-            ),
-            Text(
-              formatDate(date_time!),
-              style: TextStyle(fontSize: 14.0, color: Colors.blue[800]),
-            ),
-            const SizedBox(height: 20.0),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text(
-                "Posted by " + creator!,
-                style: TextStyle(fontSize: 14.0, color: Colors.black),
-              ),
-              Text(
-                "+ " + num_attendees.toString() + " attendees",
-                style: TextStyle(fontSize: 14.0, color: Colors.black),
-              )
-            ]),
-          ],
-        ));
+        alignment: Alignment.bottomCenter,
+        child: Container(
+            alignment: Alignment.bottomCenter,
+            width: double.infinity,
+            height: 110,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            decoration: BoxDecoration(
+                color: Colors.amber[100],
+                borderRadius: BorderRadius.circular(10.0)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title ?? ("Error: Missing Title"),
+                  style: TextStyle(fontSize: 18.0, color: Colors.black),
+                ),
+                Text(
+                  formatDate(date_time!),
+                  style: TextStyle(fontSize: 14.0, color: Colors.blue[800]),
+                ),
+                const SizedBox(height: 20.0),
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Posted by " + creator!,
+                        style: TextStyle(fontSize: 14.0, color: Colors.black),
+                      ),
+                      Text(
+                        "+ " + num_attendees.toString() + " attendees",
+                        style: TextStyle(fontSize: 14.0, color: Colors.black),
+                      )
+                    ]),
+              ],
+            )));
   }
 }
 
