@@ -35,6 +35,7 @@ class MapPageState extends State<MapPage> {
     }
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
+    
   }
 
   Future<void> getAllEvents() async {
@@ -49,6 +50,7 @@ class MapPageState extends State<MapPage> {
                 var pos = LatLng(element["latitude"], element["longitude"]);
                 var markerToAdd = Marker(
                     markerId: MarkerId(pos.toString()),
+                    infoWindow: InfoWindow(title: element["title"]),
                     position: pos,
                     draggable: true,
                     onDragEnd: (dragPos) {
