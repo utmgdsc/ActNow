@@ -1,3 +1,4 @@
+import 'package:actnow/pages/event_widget.dart';
 import 'package:flutter/material.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -12,7 +13,18 @@ class ExplorePageState extends State<ExplorePage> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: Container(
-            padding: const EdgeInsets.fromLTRB(150.0, 180.0, 0.0, 0.0),
-            child: const Text("Explore Page")));
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
+            child: Column(
+              children: [
+                event_widget(
+                  title: "test title",
+                  creator: "test creator",
+                  date_time: DateTime.now(),
+                  num_attendees: 23,
+                  img: "aaa",
+                )
+              ],
+            )));
   }
 }
