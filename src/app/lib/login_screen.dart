@@ -252,13 +252,19 @@ class _LoginPageState extends State<LoginPage> {
 
     DocumentReference ref = firestore.collection('users').doc(user!.uid);
 
-    ref.set({
-      'userid': user.uid,
-      'username': user.email,
-      'firstname': user.displayName,
-      'lastname': "",
-      'profile_picture': user.photoURL,
-    });
+    final doc = await ref.get();
+
+    // if the user is not in the database, add them. 
+    // Otherwise, do not update their info
+    if (!doc.exists) {
+      ref.set({
+        'userid': user.uid,
+        'username': user.email,
+        'firstname': user.displayName,
+        'lastname': "",
+        'profile_picture': user.photoURL,
+      });
+    }
 
     widget.onSignIn(user);
   }
