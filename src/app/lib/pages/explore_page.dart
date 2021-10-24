@@ -20,20 +20,20 @@ class ExplorePageState extends State<ExplorePage> {
                 Expanded(
                   child: ListView(
                     children: [
-                      event_widget(
+                      EventWidget(
                         title: "test title",
                         creator: "test creator 232",
                         date_time: DateTime.now(),
                         num_attendees: 23,
                       ),
-                      event_widget(
+                      EventWidget(
                         title: "test title",
                         creator: "test creator",
                         date_time: DateTime.now(),
                         num_attendees: 223,
                         img_location: 'https://i.imgur.com/jaPAgQH.jpeg',
                       ),
-                      event_widget(
+                      EventWidget(
                         title: "test title",
                         creator: "test creator 4251255",
                         date_time: DateTime.now(),

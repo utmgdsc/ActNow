@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class event_widget extends StatelessWidget {
+class EventWidget extends StatelessWidget {
   final String default_img_location =
       "https://storage.googleapis.com/support-kms-prod/ZAl1gIwyUsvfwxoW9ns47iJFioHXODBbIkrK";
 
@@ -12,7 +12,7 @@ class event_widget extends StatelessWidget {
   final DateTime? date_time;
   final int? num_attendees;
 
-  event_widget({
+  EventWidget({
     this.title,
     this.creator,
     this.date_time,
@@ -41,8 +41,17 @@ class event_widget extends StatelessWidget {
               height: 90,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               decoration: BoxDecoration(
-                  color: Colors.amber[50],
-                  borderRadius: BorderRadius.circular(10.0)),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 1,
+                    blurRadius: 2,
+                    offset: const Offset(0, 5), // changes position of shadow
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -51,7 +60,7 @@ class event_widget extends StatelessWidget {
                       children: [
                         Text(
                           title ?? ("Error: Missing Title"),
-                          style: TextStyle(fontSize: 18.0, color: Colors.black),
+                          style: const TextStyle(fontSize: 18.0, color: Colors.black),
                         ),
                         Row(children: [
                           InkResponse(
@@ -76,13 +85,13 @@ class event_widget extends StatelessWidget {
                     formatDate(date_time!),
                     style: TextStyle(fontSize: 14.0, color: Colors.blue[800]),
                   ),
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 15.0),
                   Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           "Posted by " + creator!,
-                          style: TextStyle(fontSize: 14.0, color: Colors.black),
+                          style: const TextStyle(fontSize: 14.0, color: Colors.black),
                         ),
                         Text(
                           "+ " + num_attendees.toString() + " attendees",
