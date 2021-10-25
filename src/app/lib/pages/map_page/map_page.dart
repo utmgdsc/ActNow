@@ -168,6 +168,7 @@ class MapPageState extends State<MapPage> {
                     builder: (context) => AddEvent(
                           userCreds: widget.userCreds,
                           droppedPin: droppedIn,
+                          updateEvent: null,
                           formDetail: formDetails,
                         ));
                 Navigator.push(context, route).then((value) => {

@@ -11,10 +11,12 @@ class AddEvent extends StatefulWidget {
   final User? userCreds;
   final LatLng? droppedPin;
   final Map? formDetail;
+  final String? updateEvent;
   const AddEvent(
       {Key? key,
       required this.userCreds,
       required this.droppedPin,
+      required this.updateEvent,
       this.formDetail})
       : super(key: key);
 
@@ -77,7 +79,6 @@ class AddEventState extends State<AddEvent> {
           'createdBy': widget.userCreds!.uid,
           'numAttendees': 0,
           'attendees': emptyList,
-
         });
 
         showBox("Event Added Succesfully", "SUCCESS");
@@ -85,6 +86,25 @@ class AddEventState extends State<AddEvent> {
         showBox(e.toString(), "ERROR");
       }
     }
+  }
+
+  void updateEvent() async {
+    var ref = firestore
+        .collection('events')
+        .doc("custom")
+        .collection(userAddress!)
+        .doc(widget.updateEvent);
+
+    await ref.update({
+      'title': titleControl.text,
+      'location': streetAddress,
+      'latitude': widget.droppedPin!.latitude,
+      'longitude': widget.droppedPin!.longitude,
+      'dateTime': dateControl.text,
+      'description': descControl.text,
+    });
+
+    Navigator.pop(context);
   }
 
   getUserLocation(LatLng? position) async {
@@ -100,7 +120,7 @@ class AddEventState extends State<AddEvent> {
     String? locationString;
     List<String> splitAddress =
         result!.results![0].formattedAddress!.split(',');
-        
+
     if (splitAddress.length >= 5) {
       locationString = splitAddress[0] + splitAddress[1];
       userAddress = splitAddress[2].trim();
@@ -131,7 +151,7 @@ class AddEventState extends State<AddEvent> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     FocusScope.of(context).unfocus();
-                    if (title == "SUCCESS") {   
+                    if (title == "SUCCESS") {
                       Navigator.of(context).pop("Added");
                     }
                   },
@@ -281,7 +301,11 @@ class AddEventState extends State<AddEvent> {
                                       primary: Colors.grey),
                               onPressed: _enableBtn
                                   ? () {
-                                      addEvent();
+                                      if (widget.updateEvent == null) {
+                                        addEvent();
+                                      } else {
+                                        updateEvent();
+                                      }
                                     }
                                   : () {},
                               child: const Center(

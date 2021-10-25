@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_geocoding/google_geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'map_page/add_event.dart';
 
 class EventDetails extends StatefulWidget {
   User? userCreds;
@@ -90,6 +92,27 @@ class EventDetailsState extends State<EventDetails> {
     await widget.collectionRef.doc(widget.eventUid).delete();
   }
 
+  void editEvent() {
+    var formDetails = {
+      'title': userInfo!["title"],
+      'location': userInfo!["location"],
+      'latitude': userInfo!["latitude"],
+      'longitude': userInfo!["longitude"],
+      'date': userInfo!["dateTime"],
+      'desc': userInfo!["description"],
+    };
+    Route route = MaterialPageRoute(
+        builder: (context) => AddEvent(
+              userCreds: widget.userCreds,
+              droppedPin: LatLng(userInfo!["latitude"], userInfo!["longitude"]),
+              updateEvent: widget.eventUid,
+              formDetail: formDetails,
+            ));
+    Navigator.push(context, route).then((value) => setState(() {
+          getUserInfo();
+        }));
+  }
+
   showBox(String? message, String? title) {
     showDialog(
         context: context,
@@ -107,7 +130,8 @@ class EventDetailsState extends State<EventDetails> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     deleteEvent();
-                    Navigator.of(context).pop(LatLon(userInfo!["latitude"], userInfo!["longitude"]));
+                    Navigator.of(context).pop(
+                        LatLon(userInfo!["latitude"], userInfo!["longitude"]));
                   },
                   child: const Text('Yes'))
             ],
@@ -258,7 +282,9 @@ class EventDetailsState extends State<EventDetails> {
                                           primary: Colors.red)
                                       : ElevatedButton.styleFrom(
                                           primary: Colors.blue),
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    editEvent();
+                                  },
                                   child: const Center(
                                     child: Text(
                                       'Edit',
