@@ -74,6 +74,9 @@ class AddEventState extends State<AddEvent> {
           'dateTime': dateControl.text,
           'description': descControl.text,
           'createdBy': widget.userCreds!.uid,
+          'numAttendees': 1,
+          'attendess': [],
+
         });
 
         showBox("Event Added Succesfully", "SUCCESS");
@@ -96,7 +99,7 @@ class AddEventState extends State<AddEvent> {
     String? locationString;
     List<String> splitAddress =
         result!.results![0].formattedAddress!.split(',');
-
+        
     if (splitAddress.length >= 5) {
       locationString = splitAddress[0] + splitAddress[1];
       userAddress = splitAddress[2].trim();
@@ -227,7 +230,7 @@ class AddEventState extends State<AddEvent> {
                           );
 
                           dateControl.text =
-                              DateFormat('EEEE, d MMM, yyyy').format(date!) +
+                              DateFormat('EEEE, d MMM yyyy').format(date!) +
                                   " " +
                                   time!.format(context) +
                                   " " +

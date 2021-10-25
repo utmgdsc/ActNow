@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:actnow/pages/event_details.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -35,7 +36,6 @@ class MapPageState extends State<MapPage> {
     }
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
-    
   }
 
   Future<void> getAllEvents() async {
@@ -50,7 +50,11 @@ class MapPageState extends State<MapPage> {
                 var pos = LatLng(element["latitude"], element["longitude"]);
                 var markerToAdd = Marker(
                     markerId: MarkerId(pos.toString()),
-                    infoWindow: InfoWindow(title: element["title"]),
+                    onTap: () {
+                      Route route = MaterialPageRoute(
+                          builder: (context) => EventDetails(userCreds: widget.userCreds, userInfo: element.data()));
+                      Navigator.push(context, route);
+                    },
                     position: pos,
                     draggable: true,
                     onDragEnd: (dragPos) {
