@@ -66,6 +66,7 @@ class AddEventState extends State<AddEvent> {
             .doc("custom")
             .collection(userAddress!);
 
+        List<String> emptyList = [];
         await ref.add({
           'title': titleControl.text,
           'location': streetAddress,
@@ -74,8 +75,8 @@ class AddEventState extends State<AddEvent> {
           'dateTime': dateControl.text,
           'description': descControl.text,
           'createdBy': widget.userCreds!.uid,
-          'numAttendees': 1,
-          'attendess': [],
+          'numAttendees': 0,
+          'attendees': emptyList,
 
         });
 

@@ -1,10 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class EventDetails extends StatefulWidget {
   User? userCreds;
-  Map<String, dynamic> userInfo;
-  EventDetails({Key? key, required this.userCreds, required this.userInfo})
+  CollectionReference<Map<String, dynamic>> collectionRef;
+  String eventUid;
+  EventDetails(
+      {Key? key,
+      required this.userCreds,
+      required this.collectionRef,
+      required this.eventUid})
       : super(key: key);
 
   @override
@@ -17,22 +23,83 @@ class EventDetailsState extends State<EventDetails> {
   bool userJoined = false;
   bool userCreated = false;
   int numAttendes = 0;
+  Map<String, dynamic>? userInfo;
+
+  void getUserInfo() async {
+    await widget.collectionRef.doc(widget.eventUid).get().then((value) => {
+          setState(() {
+            userInfo = value.data();
+          }),
+          checkUserCreated(),
+          if (!userCreated)
+            {
+              checkUserJoined(),
+            }
+        });
+  }
 
   void checkUserCreated() {
-    if (widget.userInfo["createdBy"] == widget.userCreds!.uid.toString()) {
+    if (userInfo!["createdBy"] == widget.userCreds!.uid.toString()) {
       userCreated = true;
     }
+  }
+
+  void checkUserJoined() {
+    (userInfo!["attendees"] as List<dynamic>).forEach((element) {
+      if (element.toString() == widget.userCreds!.uid) {
+        userJoined = true;
+        return;
+      }
+    });
+  }
+
+  void joinEvent() async {
+    List<dynamic> attendesList = userInfo!["attendees"];
+    var numAttendees = userInfo!["numAttendees"];
+    numAttendees += 1;
+    attendesList.add(widget.userCreds!.uid.toString());
+
+    await widget.collectionRef
+        .doc(widget.eventUid)
+        .update({"attendees": attendesList, "numAttendees": numAttendees});
+
+    setState(() {
+      userJoined = true;
+      getUserInfo();
+    });
+  }
+
+  void cancelEvent() async {
+    List<dynamic> attendesList = userInfo!["attendees"];
+    var numAttendees = userInfo!["numAttendees"];
+    numAttendees -= 1;
+    attendesList.remove(widget.userCreds!.uid.toString());
+
+    await widget.collectionRef
+        .doc(widget.eventUid)
+        .update({"attendees": attendesList, "numAttendees": numAttendees});
+
+    setState(() {
+      userJoined = false;
+      getUserInfo();
+    });
   }
 
   @override
   void initState() {
     super.initState();
-    checkUserCreated();
+    getUserInfo();
   }
 
   Map<String, String> formatDate() {
-    var splitDate = widget.userInfo["dateTime"].toString().split(" ");
-    var formattedDate = splitDate[0] + " " + splitDate[1] + " " + splitDate[2] + " " + splitDate[3];
+    var splitDate = userInfo!["dateTime"].toString().split(" ");
+    var formattedDate = splitDate[0] +
+        " " +
+        splitDate[2] +
+        " " +
+        splitDate[1] +
+        " " +
+        splitDate[3];
     var formattedTime = splitDate[4] + " " + splitDate[5];
 
     return {"Date": formattedDate, "Time": formattedTime};
@@ -41,6 +108,7 @@ class EventDetailsState extends State<EventDetails> {
   @override
   Widget build(BuildContext context) {
     double widthVariable = MediaQuery.of(context).size.width;
+    double heightVariable = MediaQuery.of(context).size.height;
 
     Widget buildInfoRow(IconData icon, String upperText, String lowerTest) {
       return Row(
@@ -72,6 +140,16 @@ class EventDetailsState extends State<EventDetails> {
       );
     }
 
+    if (userInfo == null) {
+      return Scaffold(
+          body: SizedBox(
+        height: heightVariable,
+        width: widthVariable,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ));
+    }
     return Scaffold(
         appBar: AppBar(
             leading: const BackButton(color: Colors.white),
@@ -94,13 +172,13 @@ class EventDetailsState extends State<EventDetails> {
                   const SizedBox(height: 15.0),
                   Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(widget.userInfo["title"],
+                      child: Text(userInfo!["title"],
                           textAlign: TextAlign.left,
                           style: const TextStyle(
                               fontSize: 36.0, fontWeight: FontWeight.bold))),
                   const SizedBox(height: 30.0),
-                  buildInfoRow(
-                      Icons.event, formatDate()["Date"]!, formatDate()["Time"]!),
+                  buildInfoRow(Icons.event, formatDate()["Date"]!,
+                      formatDate()["Time"]!),
                   const SizedBox(height: 20.0),
                   buildInfoRow(
                       Icons.location_on,
@@ -108,71 +186,111 @@ class EventDetailsState extends State<EventDetails> {
                       "3359 Mississauga Rd, Mississauga, ON L5L 1C6"),
                   const SizedBox(height: 20.0),
                   buildInfoRow(Icons.person, "Number of people joined:",
-                      widget.userInfo["numAttendees"].toString()),
+                      userInfo!["numAttendees"].toString()),
                   const SizedBox(height: 20.0),
                   Container(
                       decoration: const BoxDecoration(
                           border: Border(
                         top: BorderSide(color: Colors.black),
                       )),
-                      child: Column(children: const [
-                        SizedBox(height: 10.0),
-                        Align(
+                      child: Column(children: [
+                        const SizedBox(height: 10.0),
+                        const Align(
                             alignment: Alignment.centerLeft,
                             child: Text('About',
                                 textAlign: TextAlign.left,
                                 style: TextStyle(
                                     fontSize: 21.0,
                                     fontWeight: FontWeight.bold))),
-                        SizedBox(height: 20.0),
-                        Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                                'It’s going to be a 3 on 3 with at the RAWC and we have it booked all day. And there’s also gonna be free drinks and food afterwards. Come and play some backetball with your classmates!',
-                                textAlign: TextAlign.left,
-                                style: TextStyle(
-                                  fontSize: 16.0,
-                                ))),
+                        const SizedBox(height: 20.0),
+                        SizedBox(
+                            height: 100,
+                            child: Align(
+                                alignment: Alignment.topLeft,
+                                child: Text(userInfo!["description"].toString(),
+                                    textAlign: TextAlign.left,
+                                    style: const TextStyle(
+                                      fontSize: 16.0,
+                                    )))),
                       ])),
-                  const SizedBox(height: 40.0),
-                  SizedBox(
-                      width: widthVariable,
-                      height: 40.0,
-                      child: Material(
-                        borderRadius: BorderRadius.circular(20.0),
-                        elevation: 7.0,
-                        child: ElevatedButton(
-                          style: userJoined
-                              ? ElevatedButton.styleFrom(primary: Colors.red)
-                              : ElevatedButton.styleFrom(primary: Colors.blue),
-                          onPressed: userJoined
-                              ? () {
-                                  setState(() {
-                                    userJoined = false;
-                                    numAttendes -= 1;
-                                  });
-                                }
-                              : () {
-                                  setState(() {
-                                    userJoined = true;
-                                    numAttendes += 1;
-                                  });
-                                },
-                          child: userJoined
-                              ? const Center(
-                                  child: Text(
-                                    'Cancel',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                )
-                              : const Center(
-                                  child: Text(
-                                    'Join',
-                                    style: TextStyle(color: Colors.white),
+                  const SizedBox(height: 20.0),
+                  userCreated
+                      ? Column(children: [
+                          SizedBox(
+                              width: widthVariable,
+                              height: 40.0,
+                              child: Material(
+                                borderRadius: BorderRadius.circular(20.0),
+                                elevation: 7.0,
+                                child: ElevatedButton(
+                                  style: userJoined
+                                      ? ElevatedButton.styleFrom(
+                                          primary: Colors.red)
+                                      : ElevatedButton.styleFrom(
+                                          primary: Colors.blue),
+                                  onPressed: () {},
+                                  child: const Center(
+                                    child: Text(
+                                      'Edit',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ),
                                 ),
-                        ),
-                      )),
+                              )),
+                          const SizedBox(height: 20.0),
+                          SizedBox(
+                              width: widthVariable,
+                              height: 40.0,
+                              child: Material(
+                                borderRadius: BorderRadius.circular(20.0),
+                                elevation: 7.0,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      primary: Colors.red),
+                                  onPressed: () {},
+                                  child: const Center(
+                                    child: Text(
+                                      'Delete',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ))
+                        ])
+                      : SizedBox(
+                          width: widthVariable,
+                          height: 40.0,
+                          child: Material(
+                            borderRadius: BorderRadius.circular(20.0),
+                            elevation: 7.0,
+                            child: ElevatedButton(
+                              style: userJoined
+                                  ? ElevatedButton.styleFrom(
+                                      primary: Colors.red)
+                                  : ElevatedButton.styleFrom(
+                                      primary: Colors.blue),
+                              onPressed: userJoined
+                                  ? () {
+                                      cancelEvent();
+                                    }
+                                  : () {
+                                      joinEvent();
+                                    },
+                              child: userJoined
+                                  ? const Center(
+                                      child: Text(
+                                        'Cancel',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    )
+                                  : const Center(
+                                      child: Text(
+                                        'Join',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                            ),
+                          )),
                   const SizedBox(height: 20.0),
                 ],
               )),

@@ -40,34 +40,34 @@ class MapPageState extends State<MapPage> {
 
   Future<void> getAllEvents() async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    await firestore
-        .collection('events')
-        .doc("custom")
-        .collection("Mississauga")
-        .get()
-        .then((value) => {
-              value.docs.forEach((element) {
-                var pos = LatLng(element["latitude"], element["longitude"]);
-                var markerToAdd = Marker(
-                    markerId: MarkerId(pos.toString()),
-                    onTap: () {
-                      Route route = MaterialPageRoute(
-                          builder: (context) => EventDetails(userCreds: widget.userCreds, userInfo: element.data()));
-                      Navigator.push(context, route);
-                    },
-                    position: pos,
-                    draggable: true,
-                    onDragEnd: (dragPos) {
-                      droppedIn = dragPos;
-                    });
-                if (!_markers.contains(markerToAdd)) {
-                  _markers.add(markerToAdd);
-                }
-              }),
-              setState(() {
-                allEventsRead = true;
-              })
-            });
+    CollectionReference<Map<String, dynamic>> ref =
+        firestore.collection('events').doc("custom").collection("Mississauga");
+    await ref.get().then((value) => {
+          value.docs.forEach((element) {
+            var pos = LatLng(element["latitude"], element["longitude"]);
+            var markerToAdd = Marker(
+                markerId: MarkerId(pos.toString()),
+                onTap: () {
+                  Route route = MaterialPageRoute(
+                      builder: (context) => EventDetails(
+                          userCreds: widget.userCreds,
+                          collectionRef: ref,
+                          eventUid: element.id));
+                  Navigator.push(context, route);
+                },
+                position: pos,
+                draggable: true,
+                onDragEnd: (dragPos) {
+                  droppedIn = dragPos;
+                });
+            if (!_markers.contains(markerToAdd)) {
+              _markers.add(markerToAdd);
+            }
+          }),
+          setState(() {
+            allEventsRead = true;
+          })
+        });
   }
 
   void _currentLocation() async {
