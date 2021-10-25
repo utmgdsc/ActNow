@@ -159,6 +159,15 @@ class EventDetailsState extends State<EventDetails> {
     return {"Date": formattedDate, "Time": formattedTime};
   }
 
+  Map<String, String> formatLocation() {
+    var splitLocation = userInfo!["location"].toString().split(",");
+    print(splitLocation);
+    var formatMainLocation = splitLocation[0];
+    var formatSubLocation = splitLocation[1] + ", " + splitLocation[2] + ", " + splitLocation[3];
+
+    return {"Main": formatMainLocation, "Sub": formatSubLocation};
+  }
+
   @override
   Widget build(BuildContext context) {
     double widthVariable = MediaQuery.of(context).size.width;
@@ -236,8 +245,8 @@ class EventDetailsState extends State<EventDetails> {
                   const SizedBox(height: 20.0),
                   buildInfoRow(
                       Icons.location_on,
-                      "University of Toronto Mississauga",
-                      "3359 Mississauga Rd, Mississauga, ON L5L 1C6"),
+                      formatLocation()["Main"]!,
+                      formatLocation()["Sub"]!),
                   const SizedBox(height: 20.0),
                   buildInfoRow(Icons.person, "Number of people joined:",
                       userInfo!["numAttendees"].toString()),
