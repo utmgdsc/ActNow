@@ -254,7 +254,7 @@ class _LoginPageState extends State<LoginPage> {
 
     final doc = await ref.get();
 
-    // if the user is not in the database, add them.
+    // if the user is not in the database, add them. 
     // Otherwise, do not update their info
     if (!doc.exists) {
       ref.set({
