@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_geocoding/google_geocoding.dart';
 
 class EventDetails extends StatefulWidget {
   User? userCreds;
@@ -83,6 +84,35 @@ class EventDetailsState extends State<EventDetails> {
       userJoined = false;
       getUserInfo();
     });
+  }
+
+  void deleteEvent() async {
+    await widget.collectionRef.doc(widget.eventUid).delete();
+  }
+
+  showBox(String? message, String? title) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title!),
+            content: Text(message!),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancel')),
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    deleteEvent();
+                    Navigator.of(context).pop(LatLon(userInfo!["latitude"], userInfo!["longitude"]));
+                  },
+                  child: const Text('Yes'))
+            ],
+          );
+        });
   }
 
   @override
@@ -247,7 +277,11 @@ class EventDetailsState extends State<EventDetails> {
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                       primary: Colors.red),
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    showBox(
+                                        "Are you sure you want to delete the event?",
+                                        "Warning");
+                                  },
                                   child: const Center(
                                     child: Text(
                                       'Delete',

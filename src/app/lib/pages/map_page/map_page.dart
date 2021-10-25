@@ -53,7 +53,11 @@ class MapPageState extends State<MapPage> {
                           userCreds: widget.userCreds,
                           collectionRef: ref,
                           eventUid: element.id));
-                  Navigator.push(context, route);
+                  Navigator.push(context, route).then((value) => setState(() {
+                        if (value != null) {
+                          _markers.removeWhere((marker) => marker.markerId.value == LatLng(value.latitude, value.longitude).toString());
+                        }
+                      }));
                 },
                 position: pos,
                 draggable: true,
