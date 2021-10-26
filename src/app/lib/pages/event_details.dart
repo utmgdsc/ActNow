@@ -6,10 +6,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'map_page/add_event.dart';
 
 class EventDetails extends StatefulWidget {
-  User? userCreds;
-  CollectionReference<Map<String, dynamic>> collectionRef;
-  String eventUid;
-  EventDetails(
+  final User? userCreds;
+  final CollectionReference<Map<String, dynamic>> collectionRef;
+  final String eventUid;
+  const EventDetails(
       {Key? key,
       required this.userCreds,
       required this.collectionRef,
@@ -25,7 +25,6 @@ class EventDetailsState extends State<EventDetails> {
       "https://static01.nyt.com/images/2019/06/08/sports/08toronto-basketball3/merlin_155853060_bec166c9-17a2-4657-96eb-26da8326e94a-articleLarge.jpg?quality=75&auto=webp&disable=upscale";
   bool userJoined = false;
   bool userCreated = false;
-  int numAttendes = 0;
   Map<String, dynamic>? userInfo;
 
   void getUserInfo() async {
@@ -161,9 +160,8 @@ class EventDetailsState extends State<EventDetails> {
 
   Map<String, String> formatLocation() {
     var splitLocation = userInfo!["location"].toString().split(",");
-    print(splitLocation);
     var formatMainLocation = splitLocation[0];
-    var formatSubLocation = splitLocation[1] + ", " + splitLocation[2] + ", " + splitLocation[3];
+    var formatSubLocation = splitLocation[1].split(" ")[1] + ", " + splitLocation[2] + ", " + splitLocation[3];
 
     return {"Main": formatMainLocation, "Sub": formatSubLocation};
   }
