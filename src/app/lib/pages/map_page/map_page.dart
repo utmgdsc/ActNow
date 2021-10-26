@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_geocoding/google_geocoding.dart' as google_geocoding;
 import 'package:location/location.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'add_event.dart';
 
 class MapPage extends StatefulWidget {
@@ -29,21 +32,49 @@ class MapPageState extends State<MapPage> {
     getAllEvents();
   }
 
-  void _onMapCreated(GoogleMapController controller) {
+  Future<void> _onMapCreated(GoogleMapController controller) async {
     if (!_controller.isCompleted) {
       _controller.complete(controller);
     }
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
-    
+    await getAllEvents();
+    _moveToCurrentLocation();
   }
 
   Future<void> getAllEvents() async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    late google_geocoding.GoogleGeocoding googleGeocoding;
+    LocationData? currentLocation = await _getCurrentLocation();
+    String? city;
+
+    if (Platform.isAndroid) {
+      googleGeocoding =
+          google_geocoding.GoogleGeocoding(dotenv.env["API_KEY_ANDRIOD"]!);
+    } else if (Platform.isIOS) {
+      googleGeocoding =
+          google_geocoding.GoogleGeocoding(dotenv.env["API_KEY_IOS"]!);
+    }
+    var result = await googleGeocoding.geocoding.getReverse(
+        google_geocoding.LatLon(
+            currentLocation!.latitude!, currentLocation.longitude!));
+
+    List<String> splitAddress =
+        result!.results![0].formattedAddress!.split(',');
+
+    if (splitAddress.length >= 5) {
+      city = splitAddress[2].trim();
+    } else if (splitAddress.length == 3) {
+      var formatAddress = splitAddress[0].split(" ")[1];
+      city = formatAddress.trim();
+    } else {
+      city = splitAddress[1].trim();
+    }
+
     await firestore
         .collection('events')
         .doc("custom")
-        .collection("Mississauga")
+        .collection(city)
         .get()
         .then((value) => {
               value.docs.forEach((element) {
@@ -66,40 +97,46 @@ class MapPageState extends State<MapPage> {
             });
   }
 
-  void _currentLocation() async {
-    final GoogleMapController controller = await _controller.future;
+  Future<LocationData?> _getCurrentLocation() async {
+    var rawLocation = Location();
     LocationData? currentLocation;
-    var location = Location();
-    var serviceEnabled = await location.serviceEnabled();
+    var serviceEnabled = await rawLocation.serviceEnabled();
 
     if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
+      serviceEnabled = await rawLocation.requestService();
       if (!serviceEnabled) {
-        return;
+        return null;
       }
     }
 
-    var permissionGranted = await location.hasPermission();
+    var permissionGranted = await rawLocation.hasPermission();
 
     if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
+      permissionGranted = await rawLocation.requestPermission();
       if (permissionGranted != PermissionStatus.granted) {
-        return;
+        return null;
       }
     }
 
     try {
-      currentLocation = await location.getLocation();
+      currentLocation = await rawLocation.getLocation();
     } on Exception {
       currentLocation = null;
     }
-    controller.animateCamera(CameraUpdate.newCameraPosition(
-      CameraPosition(
-        bearing: 0,
-        target: LatLng(currentLocation!.latitude!, currentLocation.longitude!),
-        zoom: 17.0,
-      ),
-    ));
+
+    return currentLocation;
+  }
+
+  void _moveToCurrentLocation() async {
+    LocationData? currentLocation = await _getCurrentLocation();
+
+    if (currentLocation != null) {
+      final GoogleMapController controller = await _controller.future;
+      controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+          target: LatLng(currentLocation.latitude ?? 43.55103829955488,
+              currentLocation.longitude ?? -79.66262838104547),
+          zoom: 15.0)));
+    }
   }
 
   void addMarker(LatLng tappedPosition) {
@@ -195,7 +232,8 @@ class MapPageState extends State<MapPage> {
         const SizedBox(height: 15),
         FloatingActionButton(
           onPressed: () {
-            _currentLocation();
+            getAllEvents();
+            _moveToCurrentLocation();
           },
           child: const Icon(
             Icons.my_location,
