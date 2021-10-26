@@ -32,6 +32,38 @@ class MapPageState extends State<MapPage> {
     getAllEvents();
   }
 
+  Future<LocationData?> _getCurrentLocation() async {
+    var rawLocation = Location();
+    rawLocation.changeSettings(accuracy: LocationAccuracy.high);
+    LocationData? currentLocation;
+    var serviceEnabled = await rawLocation.serviceEnabled();
+
+    if (!serviceEnabled) {
+      serviceEnabled = await rawLocation.requestService();
+      if (!serviceEnabled) {
+        return null;
+      }
+    }
+
+    var permissionGranted = await rawLocation.hasPermission();
+
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await rawLocation.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
+        return null;
+      }
+    }
+
+    try {
+      currentLocation = await rawLocation.getLocation();
+    } catch (e) {
+      print(e);
+      currentLocation = null;
+    }
+
+    return currentLocation;
+  }
+
   Future<void> _onMapCreated(GoogleMapController controller) async {
     if (!_controller.isCompleted) {
       _controller.complete(controller);
@@ -95,36 +127,6 @@ class MapPageState extends State<MapPage> {
                 allEventsRead = true;
               })
             });
-  }
-
-  Future<LocationData?> _getCurrentLocation() async {
-    var rawLocation = Location();
-    LocationData? currentLocation;
-    var serviceEnabled = await rawLocation.serviceEnabled();
-
-    if (!serviceEnabled) {
-      serviceEnabled = await rawLocation.requestService();
-      if (!serviceEnabled) {
-        return null;
-      }
-    }
-
-    var permissionGranted = await rawLocation.hasPermission();
-
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await rawLocation.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        return null;
-      }
-    }
-
-    try {
-      currentLocation = await rawLocation.getLocation();
-    } on Exception {
-      currentLocation = null;
-    }
-
-    return currentLocation;
   }
 
   void _moveToCurrentLocation() async {
@@ -231,8 +233,8 @@ class MapPageState extends State<MapPage> {
             )),
         const SizedBox(height: 15),
         FloatingActionButton(
-          onPressed: () {
-            getAllEvents();
+          onPressed: () async {
+            await getAllEvents();
             _moveToCurrentLocation();
           },
           child: const Icon(
