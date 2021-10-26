@@ -34,7 +34,6 @@ class MapPageState extends State<MapPage> {
 
   Future<LocationData?> _getCurrentLocation() async {
     var rawLocation = Location();
-    rawLocation.changeSettings(accuracy: LocationAccuracy.high);
     LocationData? currentLocation;
     var serviceEnabled = await rawLocation.serviceEnabled();
 
