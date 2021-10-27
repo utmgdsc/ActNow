@@ -43,6 +43,9 @@ dependencies:
   location: ^4.2.0
   flutter_dotenv: ^5.0.2
   google_geocoding: ^0.2.0
+  image_picker: ^0.8.4+3
+  firebase_storage: ^10.0.6
+  uuid: ^3.0.5
 
 dev_dependencies:
   flutter_test:
