@@ -1,5 +1,9 @@
 import 'dart:async';
+<<<<<<< HEAD
 import 'dart:io';
+=======
+import 'package:actnow/pages/event_details.dart';
+>>>>>>> master
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -106,30 +110,39 @@ class MapPageState extends State<MapPage> {
       city = splitAddress[1].trim();
     }
 
-    await firestore
-        .collection('events')
-        .doc("custom")
-        .collection(city)
-        .get()
-        .then((value) => {
-              value.docs.forEach((element) {
-                var pos = LatLng(element["latitude"], element["longitude"]);
-                var markerToAdd = Marker(
-                    markerId: MarkerId(pos.toString()),
-                    infoWindow: InfoWindow(title: element["title"]),
-                    position: pos,
-                    draggable: true,
-                    onDragEnd: (dragPos) {
-                      droppedIn = dragPos;
-                    });
-                if (!_markers.contains(markerToAdd)) {
-                  _markers.add(markerToAdd);
-                }
-              }),
-              setState(() {
-                allEventsRead = true;
-              })
-            });
+    CollectionReference<Map<String, dynamic>> ref =
+        firestore.collection('events').doc("custom").collection(city);
+
+    await ref.get().then((value) => {
+          value.docs.forEach((element) {
+            var pos = LatLng(element["latitude"], element["longitude"]);
+            var markerToAdd = Marker(
+                markerId: MarkerId(pos.toString()),
+                onTap: () {
+                  Route route = MaterialPageRoute(
+                      builder: (context) => EventDetails(
+                          userCreds: widget.userCreds,
+                          collectionRef: ref,
+                          eventUid: element.id));
+                  Navigator.push(context, route).then((value) => setState(() {
+                        if (value != null) {
+                          _markers.removeWhere((marker) => marker.markerId.value == LatLng(value.latitude, value.longitude).toString());
+                        }
+                      }));
+                },
+                position: pos,
+                draggable: true,
+                onDragEnd: (dragPos) {
+                  droppedIn = dragPos;
+                });
+            if (!_markers.contains(markerToAdd)) {
+              _markers.add(markerToAdd);
+            }
+          }),
+          setState(() {
+            allEventsRead = true;
+          })
+        });
   }
 
   void _moveToCurrentLocation() async {
@@ -198,6 +211,7 @@ class MapPageState extends State<MapPage> {
                     builder: (context) => AddEvent(
                           userCreds: widget.userCreds,
                           droppedPin: droppedIn,
+                          updateEvent: null,
                           formDetail: formDetails,
                         ));
                 Navigator.push(context, route).then((value) => {

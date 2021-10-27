@@ -11,10 +11,12 @@ class AddEvent extends StatefulWidget {
   final User? userCreds;
   final LatLng? droppedPin;
   final Map? formDetail;
+  final String? updateEvent;
   const AddEvent(
       {Key? key,
       required this.userCreds,
       required this.droppedPin,
+      required this.updateEvent,
       this.formDetail})
       : super(key: key);
 
@@ -66,6 +68,7 @@ class AddEventState extends State<AddEvent> {
             .doc("custom")
             .collection(userAddress!);
 
+        List<String> emptyList = [];
         await ref.add({
           'title': titleControl.text,
           'location': streetAddress,
@@ -74,6 +77,8 @@ class AddEventState extends State<AddEvent> {
           'dateTime': dateControl.text,
           'description': descControl.text,
           'createdBy': widget.userCreds!.uid,
+          'numAttendees': 0,
+          'attendees': emptyList,
         });
 
         showBox("Event Added Succesfully", "SUCCESS");
@@ -81,6 +86,25 @@ class AddEventState extends State<AddEvent> {
         showBox(e.toString(), "ERROR");
       }
     }
+  }
+
+  void updateEvent() async {
+    var ref = firestore
+        .collection('events')
+        .doc("custom")
+        .collection(userAddress!)
+        .doc(widget.updateEvent);
+
+    await ref.update({
+      'title': titleControl.text,
+      'location': streetAddress,
+      'latitude': widget.droppedPin!.latitude,
+      'longitude': widget.droppedPin!.longitude,
+      'dateTime': dateControl.text,
+      'description': descControl.text,
+    });
+
+    Navigator.pop(context);
   }
 
   getUserLocation(LatLng? position) async {
@@ -127,7 +151,7 @@ class AddEventState extends State<AddEvent> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     FocusScope.of(context).unfocus();
-                    if (title == "SUCCESS") {   
+                    if (title == "SUCCESS") {
                       Navigator.of(context).pop("Added");
                     }
                   },
@@ -227,7 +251,7 @@ class AddEventState extends State<AddEvent> {
                           );
 
                           dateControl.text =
-                              DateFormat('EEEE, d MMM, yyyy').format(date!) +
+                              DateFormat('EEEE, d MMM yyyy').format(date!) +
                                   " " +
                                   time!.format(context) +
                                   " " +
@@ -277,7 +301,11 @@ class AddEventState extends State<AddEvent> {
                                       primary: Colors.grey),
                               onPressed: _enableBtn
                                   ? () {
-                                      addEvent();
+                                      if (widget.updateEvent == null) {
+                                        addEvent();
+                                      } else {
+                                        updateEvent();
+                                      }
                                     }
                                   : () {},
                               child: const Center(
