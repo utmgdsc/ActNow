@@ -32,7 +32,7 @@ class ExplorePageState extends State<ExplorePage> {
                           itemBuilder: (context, index) {
                             return EventWidget(
                               title: snapshot.data![index].title,
-                              creator: "test creator",
+                              creator: snapshot.data![index].creator,
                               date_time: snapshot.data![index].date_time,
                               num_attendees:
                                   snapshot.data![index].num_attendees,
@@ -75,19 +75,20 @@ class EventDetails {
 Future<List<EventDetails>> getEventData() async {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  CollectionReference<Map<String, dynamic>> test =
+  CollectionReference<Map<String, dynamic>> events =
       firestore.collection('events').doc("custom").collection("Mississauga");
 
-  List<EventDetails> asdf = <EventDetails>[];
-  await test.get().then((value) => {
+  List<EventDetails> eventsList = <EventDetails>[];
+  await events.get().then((value) => {
         value.docs.forEach((element) {
-          asdf.add(EventDetails(
+          eventsList.add(EventDetails(
               title: element['title'],
               num_attendees: element['numAttendees'],
               img_location: element['imageUrl'],
-              date_time: element['dateTime']));
+              date_time: element['dateTime'],
+              creator: element['createdByName']));
         })
       });
 
-  return asdf;
+  return eventsList;
 }
