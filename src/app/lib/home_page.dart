@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     screens = [
       MapPage(userCreds: widget.userCreds),
-      const ExplorePage(),
+      ExplorePage(userCreds: widget.userCreds),
       const SavedPage(),
       ProfilePage(userCreds: widget.userCreds, onSignOut: widget.onSignOut)
     ];
