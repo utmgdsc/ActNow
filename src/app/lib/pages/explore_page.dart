@@ -25,18 +25,18 @@ class ExplorePageState extends State<ExplorePage> {
                   child: FutureBuilder(
                     initialData: [],
                     future: getEventData(),
-                    builder: (context, snapshot) {
+                    builder: (context, AsyncSnapshot<List> snapshot) {
                       return ListView.builder(
-                          //itemCount: snapshot.data!.length,
-                          itemCount: 2,
+                          itemCount: snapshot.data!.length,
+                          //itemCount: 2,
                           itemBuilder: (context, index) {
                             return EventWidget(
-                              //title: snapshot.data![index].title,
-                              title: "testssss",
+                              title: snapshot.data![index].title,
                               creator: "test creator",
                               date_time: DateTime.now(),
-                              num_attendees: 223,
-                              img_location: 'https://i.imgur.com/jaPAgQH.jpeg',
+                              num_attendees:
+                                  snapshot.data![index].num_attendees,
+                              img_location: snapshot.data![index].img_location,
                             );
                           });
                     },
@@ -51,7 +51,7 @@ class EventDetails {
   final String? img_location;
   final String? title;
   final String? creator;
-  final DateTime? date_time;
+  final String? date_time;
   final int? num_attendees;
 
   EventDetails({
@@ -74,12 +74,20 @@ class EventDetails {
 
 Future<List<EventDetails>> getEventData() async {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-  List<Map<String, dynamic>> ref = firestore
-      .collection('events')
-      .doc("custom")
-      .collection("Mississauga") as List<Map<String, dynamic>>;
 
-  return List.generate(ref.length, (index) {
-    return EventDetails(title: ref[index]['title']);
-  });
+  CollectionReference<Map<String, dynamic>> test =
+      firestore.collection('events').doc("custom").collection("Mississauga");
+
+  List<EventDetails> asdf = <EventDetails>[];
+  await test.get().then((value) => {
+        value.docs.forEach((element) {
+          asdf.add(EventDetails(
+              title: element['title'],
+              num_attendees: element['numAttendees'],
+              img_location: element['imageUrl'],
+              date_time: element['dateTime']));
+        })
+      });
+
+  return asdf;
 }
