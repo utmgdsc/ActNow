@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_geocoding/google_geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -21,8 +22,6 @@ class EventDetails extends StatefulWidget {
 }
 
 class EventDetailsState extends State<EventDetails> {
-  final String default_img_location =
-      "https://static01.nyt.com/images/2019/06/08/sports/08toronto-basketball3/merlin_155853060_bec166c9-17a2-4657-96eb-26da8326e94a-articleLarge.jpg?quality=75&auto=webp&disable=upscale";
   bool userJoined = false;
   bool userCreated = false;
   Map<String, dynamic>? userInfo;
@@ -89,6 +88,7 @@ class EventDetailsState extends State<EventDetails> {
 
   void deleteEvent() async {
     await widget.collectionRef.doc(widget.eventUid).delete();
+    await FirebaseStorage.instance.refFromURL(userInfo!["imageUrl"]).delete();
   }
 
   void editEvent() {
@@ -160,8 +160,23 @@ class EventDetailsState extends State<EventDetails> {
 
   Map<String, String> formatLocation() {
     var splitLocation = userInfo!["location"].toString().split(",");
-    var formatMainLocation = splitLocation[0];
-    var formatSubLocation = splitLocation[1].split(" ")[1] + ", " + splitLocation[2] + ", " + splitLocation[3];
+    String formatMainLocation;
+    String formatSubLocation;
+    if (splitLocation.length < 4) {
+      formatMainLocation = splitLocation[0];
+      formatSubLocation = splitLocation[0].split(" ")[1] +
+          ", " +
+          splitLocation[1] +
+          ", " +
+          splitLocation[2];
+    } else {
+      formatMainLocation = splitLocation[0];
+      formatSubLocation = splitLocation[1].split(" ")[1] +
+          ", " +
+          splitLocation[2] +
+          ", " +
+          splitLocation[3];
+    }
 
     return {"Main": formatMainLocation, "Sub": formatSubLocation};
   }
@@ -223,7 +238,7 @@ class EventDetailsState extends State<EventDetails> {
             height: 150,
             decoration: BoxDecoration(
                 image: DecorationImage(
-                    image: NetworkImage(default_img_location),
+                    image: NetworkImage(userInfo!["imageUrl"]),
                     fit: BoxFit.cover)),
           ),
           Container(
@@ -241,9 +256,7 @@ class EventDetailsState extends State<EventDetails> {
                   buildInfoRow(Icons.event, formatDate()["Date"]!,
                       formatDate()["Time"]!),
                   const SizedBox(height: 20.0),
-                  buildInfoRow(
-                      Icons.location_on,
-                      formatLocation()["Main"]!,
+                  buildInfoRow(Icons.location_on, formatLocation()["Main"]!,
                       formatLocation()["Sub"]!),
                   const SizedBox(height: 20.0),
                   buildInfoRow(Icons.person, "Number of people joined:",
