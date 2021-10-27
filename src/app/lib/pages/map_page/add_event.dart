@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:google_geocoding/google_geocoding.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:uuid/uuid.dart';
 import 'dart:io';
 
 class AddEvent extends StatefulWidget {
@@ -25,6 +28,9 @@ class AddEvent extends StatefulWidget {
 }
 
 class AddEventState extends State<AddEvent> {
+  final String defaultImg = "https://www.colorhexa.com/bdbdbd.png";
+  final ImagePicker _picker = ImagePicker();
+  XFile? _image;
   String? userAddress;
   late TextEditingController dateControl;
   late TextEditingController titleControl;
@@ -38,6 +44,24 @@ class AddEventState extends State<AddEvent> {
   CollectionReference users = FirebaseFirestore.instance.collection('events');
 
   TextEditingController? locationControl;
+
+  void _imgFromCamera() async {
+    XFile? image =
+        await _picker.pickImage(source: ImageSource.camera, imageQuality: 50);
+
+    setState(() {
+      _image = image;
+    });
+  }
+
+  void _imgFromGallery() async {
+    XFile? image =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+
+    setState(() {
+      _image = image;
+    });
+  }
 
   void checkButtonStatus() {
     if (dateControl.text != "" &&
@@ -69,6 +93,19 @@ class AddEventState extends State<AddEvent> {
             .collection(userAddress!);
 
         List<String> emptyList = [];
+        String? imageUrl;
+
+        if (_image != null) {
+          var fileRef = firebase_storage.FirebaseStorage.instance
+              .ref(const Uuid().v4().toString());
+          try {
+            await fileRef.putFile(File(_image!.path));
+          } catch (e) {
+            // e.g, e.code == 'canceled'
+          }
+          imageUrl = await fileRef.getDownloadURL();
+        }
+
         await ref.add({
           'title': titleControl.text,
           'location': streetAddress,
@@ -79,6 +116,7 @@ class AddEventState extends State<AddEvent> {
           'createdBy': widget.userCreds!.uid,
           'numAttendees': 0,
           'attendees': emptyList,
+          "imageUrl": imageUrl ?? defaultImg,
         });
 
         showBox("Event Added Succesfully", "SUCCESS");
@@ -139,6 +177,34 @@ class AddEventState extends State<AddEvent> {
     });
   }
 
+  void _showPicker(context) {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc) {
+          return SafeArea(
+            child: Wrap(
+              children: <Widget>[
+                ListTile(
+                    leading: const Icon(Icons.photo_library),
+                    title: const Text('Photo Library'),
+                    onTap: () {
+                      _imgFromGallery();
+                      Navigator.of(context).pop();
+                    }),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('Camera'),
+                  onTap: () {
+                    _imgFromCamera();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          );
+        });
+  }
+
   showBox(String? message, String? title) {
     showDialog(
         context: context,
@@ -175,13 +241,20 @@ class AddEventState extends State<AddEvent> {
           Container(
             width: widthVariable,
             height: 150,
-            color: Colors.grey[400],
+            decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: _image == null
+                        ? NetworkImage(defaultImg) as ImageProvider
+                        : FileImage(File(_image!.path)),
+                    fit: BoxFit.cover)),
             child: Padding(
               padding: EdgeInsets.fromLTRB(widthVariable / 1.2, 100, 0, 10),
               child: FloatingActionButton(
                 heroTag: "btn2",
                 mini: true,
-                onPressed: () {},
+                onPressed: () {
+                  _showPicker(context);
+                },
                 child: const Icon(
                   Icons.add,
                   color: Colors.blue,
