@@ -6,11 +6,8 @@ import 'package:flutter/material.dart';
 import 'event_details.dart';
 
 class ExplorePage extends StatefulWidget {
-  //final User? userCreds;
-  //final CollectionReference<Map<String, dynamic>> collectionRef;
   final User? userCreds;
   const ExplorePage({Key? key, required this.userCreds}) : super(key: key);
-  //const ExplorePage({Key? key}) : super(key: key);
 
   @override
   ExplorePageState createState() => ExplorePageState();
@@ -32,7 +29,6 @@ class ExplorePageState extends State<ExplorePage> {
                     builder: (context, AsyncSnapshot<List> snapshot) {
                       return ListView.builder(
                           itemCount: snapshot.data!.length,
-                          //itemCount: 2,
                           itemBuilder: (context, index) {
                             return GestureDetector(
                               onTap: () {
