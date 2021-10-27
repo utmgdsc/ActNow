@@ -33,7 +33,7 @@ class ExplorePageState extends State<ExplorePage> {
                             return EventWidget(
                               title: snapshot.data![index].title,
                               creator: "test creator",
-                              date_time: DateTime.now(),
+                              date_time: snapshot.data![index].date_time,
                               num_attendees:
                                   snapshot.data![index].num_attendees,
                               img_location: snapshot.data![index].img_location,
