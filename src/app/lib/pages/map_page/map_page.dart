@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:actnow/pages/event_details.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -35,35 +36,42 @@ class MapPageState extends State<MapPage> {
     }
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
-    
   }
 
   Future<void> getAllEvents() async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    await firestore
-        .collection('events')
-        .doc("custom")
-        .collection("Mississauga")
-        .get()
-        .then((value) => {
-              value.docs.forEach((element) {
-                var pos = LatLng(element["latitude"], element["longitude"]);
-                var markerToAdd = Marker(
-                    markerId: MarkerId(pos.toString()),
-                    infoWindow: InfoWindow(title: element["title"]),
-                    position: pos,
-                    draggable: true,
-                    onDragEnd: (dragPos) {
-                      droppedIn = dragPos;
-                    });
-                if (!_markers.contains(markerToAdd)) {
-                  _markers.add(markerToAdd);
-                }
-              }),
-              setState(() {
-                allEventsRead = true;
-              })
-            });
+    CollectionReference<Map<String, dynamic>> ref =
+        firestore.collection('events').doc("custom").collection("Mississauga");
+    await ref.get().then((value) => {
+          value.docs.forEach((element) {
+            var pos = LatLng(element["latitude"], element["longitude"]);
+            var markerToAdd = Marker(
+                markerId: MarkerId(pos.toString()),
+                onTap: () {
+                  Route route = MaterialPageRoute(
+                      builder: (context) => EventDetails(
+                          userCreds: widget.userCreds,
+                          collectionRef: ref,
+                          eventUid: element.id));
+                  Navigator.push(context, route).then((value) => setState(() {
+                        if (value != null) {
+                          _markers.removeWhere((marker) => marker.markerId.value == LatLng(value.latitude, value.longitude).toString());
+                        }
+                      }));
+                },
+                position: pos,
+                draggable: true,
+                onDragEnd: (dragPos) {
+                  droppedIn = dragPos;
+                });
+            if (!_markers.contains(markerToAdd)) {
+              _markers.add(markerToAdd);
+            }
+          }),
+          setState(() {
+            allEventsRead = true;
+          })
+        });
   }
 
   void _currentLocation() async {
@@ -160,6 +168,7 @@ class MapPageState extends State<MapPage> {
                     builder: (context) => AddEvent(
                           userCreds: widget.userCreds,
                           droppedPin: droppedIn,
+                          updateEvent: null,
                           formDetail: formDetails,
                         ));
                 Navigator.push(context, route).then((value) => {
