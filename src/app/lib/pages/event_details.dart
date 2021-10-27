@@ -88,7 +88,9 @@ class EventDetailsState extends State<EventDetails> {
 
   void deleteEvent() async {
     await widget.collectionRef.doc(widget.eventUid).delete();
-    await FirebaseStorage.instance.refFromURL(userInfo!["imageUrl"]).delete();
+    if (userInfo!["imageUrl"].toString().length > 50) {
+      await FirebaseStorage.instance.refFromURL(userInfo!["imageUrl"]).delete();
+    }
   }
 
   void editEvent() {
