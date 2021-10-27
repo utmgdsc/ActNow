@@ -9,7 +9,7 @@ class EventWidget extends StatelessWidget {
   final String? img_location;
   final String? title;
   final String? creator;
-  final DateTime? date_time;
+  final String? date_time;
   final int? num_attendees;
 
   EventWidget({
@@ -60,7 +60,8 @@ class EventWidget extends StatelessWidget {
                       children: [
                         Text(
                           title ?? ("Error: Missing Title"),
-                          style: const TextStyle(fontSize: 18.0, color: Colors.black),
+                          style: const TextStyle(
+                              fontSize: 18.0, color: Colors.black),
                         ),
                         Row(children: [
                           InkResponse(
@@ -82,7 +83,7 @@ class EventWidget extends StatelessWidget {
                         ])
                       ]),
                   Text(
-                    formatDate(date_time!),
+                    date_time!,
                     style: TextStyle(fontSize: 14.0, color: Colors.blue[800]),
                   ),
                   const SizedBox(height: 15.0),
@@ -91,7 +92,8 @@ class EventWidget extends StatelessWidget {
                       children: [
                         Text(
                           "Posted by " + creator!,
-                          style: const TextStyle(fontSize: 14.0, color: Colors.black),
+                          style: const TextStyle(
+                              fontSize: 14.0, color: Colors.black),
                         ),
                         Text(
                           "+ " + num_attendees.toString() + " attendees",

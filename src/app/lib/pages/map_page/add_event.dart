@@ -114,6 +114,7 @@ class AddEventState extends State<AddEvent> {
           'dateTime': dateControl.text,
           'description': descControl.text,
           'createdBy': widget.userCreds!.uid,
+          'createdByName': widget.userCreds!.displayName,
           'numAttendees': 0,
           'attendees': emptyList,
           "imageUrl": imageUrl ?? defaultImg,
