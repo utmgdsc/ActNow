@@ -25,22 +25,29 @@ class MapPageState extends State<MapPage> {
   final Completer<GoogleMapController> _controller = Completer();
   late LatLng droppedIn;
   bool disableAddEvent = false;
+  var currentLocation;
+  LatLng defaultLocation = const LatLng(43.55103829955488, -79.66262838104547);
 
   @override
   void initState() {
     super.initState();
-    getAllEvents();
+    _loadMapData();
   }
 
-  Future<LocationData?> _getCurrentLocation() async {
+  void _loadMapData() async {
+    await _getCurrentLocation();
+    await getAllEvents();
+  }
+
+  Future<void> _getCurrentLocation() async {
     var rawLocation = Location();
-    LocationData? currentLocation;
     var serviceEnabled = await rawLocation.serviceEnabled();
 
     if (!serviceEnabled) {
       serviceEnabled = await rawLocation.requestService();
       if (!serviceEnabled) {
-        return null;
+        currentLocation = defaultLocation;
+        return;
       }
     }
 
@@ -49,18 +56,16 @@ class MapPageState extends State<MapPage> {
     if (permissionGranted == PermissionStatus.denied) {
       permissionGranted = await rawLocation.requestPermission();
       if (permissionGranted != PermissionStatus.granted) {
-        return null;
+        currentLocation = defaultLocation;
+        return;
       }
     }
 
     try {
       currentLocation = await rawLocation.getLocation();
     } catch (e) {
-      print(e);
-      currentLocation = null;
+      currentLocation = defaultLocation;
     }
-
-    return currentLocation;
   }
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
@@ -76,7 +81,6 @@ class MapPageState extends State<MapPage> {
   Future<void> getAllEvents() async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     late google_geocoding.GoogleGeocoding googleGeocoding;
-    LocationData? currentLocation = await _getCurrentLocation();
     String? city;
 
     if (Platform.isAndroid) {
@@ -129,15 +133,11 @@ class MapPageState extends State<MapPage> {
   }
 
   void _moveToCurrentLocation() async {
-    LocationData? currentLocation = await _getCurrentLocation();
-
-    if (currentLocation != null) {
-      final GoogleMapController controller = await _controller.future;
-      controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-          target: LatLng(currentLocation.latitude ?? 43.55103829955488,
-              currentLocation.longitude ?? -79.66262838104547),
-          zoom: 15.0)));
-    }
+    final GoogleMapController controller = await _controller.future;
+    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+        target: LatLng(currentLocation.latitude ?? defaultLocation.latitude,
+            currentLocation.longitude ?? defaultLocation.longitude),
+        zoom: 15.0)));
   }
 
   void addMarker(LatLng tappedPosition) {
@@ -176,7 +176,7 @@ class MapPageState extends State<MapPage> {
     double widthVariable = MediaQuery.of(context).size.width;
     double heightVariable = MediaQuery.of(context).size.height;
 
-    if (allEventsRead == false) {
+    if (allEventsRead == false || currentLocation == null) {
       return Scaffold(
           body: SizedBox(
         height: heightVariable,
@@ -233,6 +233,7 @@ class MapPageState extends State<MapPage> {
         const SizedBox(height: 15),
         FloatingActionButton(
           onPressed: () async {
+            await _getCurrentLocation();
             await getAllEvents();
             _moveToCurrentLocation();
           },
