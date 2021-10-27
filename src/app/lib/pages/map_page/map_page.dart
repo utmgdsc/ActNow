@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:actnow/pages/event_details.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_geocoding/google_geocoding.dart' as google_geocoding;
 import 'package:location/location.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'add_event.dart';
 
 class MapPage extends StatefulWidget {
@@ -23,25 +26,90 @@ class MapPageState extends State<MapPage> {
   final Completer<GoogleMapController> _controller = Completer();
   late LatLng droppedIn;
   bool disableAddEvent = false;
+  var currentLocation;
+  LatLng defaultLocation = const LatLng(43.55103829955488, -79.66262838104547);
 
   @override
   void initState() {
     super.initState();
-    getAllEvents();
+    _loadMapData();
   }
 
-  void _onMapCreated(GoogleMapController controller) {
+  void _loadMapData() async {
+    await _getCurrentLocation();
+    await getAllEvents();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    var rawLocation = Location();
+    var serviceEnabled = await rawLocation.serviceEnabled();
+
+    if (!serviceEnabled) {
+      serviceEnabled = await rawLocation.requestService();
+      if (!serviceEnabled) {
+        currentLocation = defaultLocation;
+        return;
+      }
+    }
+
+    var permissionGranted = await rawLocation.hasPermission();
+
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await rawLocation.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
+        currentLocation = defaultLocation;
+        return;
+      }
+    }
+
+    try {
+      currentLocation = await rawLocation.getLocation();
+    } catch (e) {
+      currentLocation = defaultLocation;
+    }
+  }
+
+  Future<void> _onMapCreated(GoogleMapController controller) async {
     if (!_controller.isCompleted) {
       _controller.complete(controller);
     }
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
+    await getAllEvents();
+    _moveToCurrentLocation();
   }
 
   Future<void> getAllEvents() async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    late google_geocoding.GoogleGeocoding googleGeocoding;
+    String? city;
+
+    if (Platform.isAndroid) {
+      googleGeocoding =
+          google_geocoding.GoogleGeocoding(dotenv.env["API_KEY_ANDRIOD"]!);
+    } else if (Platform.isIOS) {
+      googleGeocoding =
+          google_geocoding.GoogleGeocoding(dotenv.env["API_KEY_IOS"]!);
+    }
+    var result = await googleGeocoding.geocoding.getReverse(
+        google_geocoding.LatLon(
+            currentLocation!.latitude!, currentLocation.longitude!));
+
+    List<String> splitAddress =
+        result!.results![0].formattedAddress!.split(',');
+
+    if (splitAddress.length >= 5) {
+      city = splitAddress[2].trim();
+    } else if (splitAddress.length == 3) {
+      var formatAddress = splitAddress[0].split(" ")[1];
+      city = formatAddress.trim();
+    } else {
+      city = splitAddress[1].trim();
+    }
+
     CollectionReference<Map<String, dynamic>> ref =
-        firestore.collection('events').doc("custom").collection("Mississauga");
+        firestore.collection('events').doc("custom").collection(city);
+
     await ref.get().then((value) => {
           value.docs.forEach((element) {
             var pos = LatLng(element["latitude"], element["longitude"]);
@@ -74,40 +142,12 @@ class MapPageState extends State<MapPage> {
         });
   }
 
-  void _currentLocation() async {
+  void _moveToCurrentLocation() async {
     final GoogleMapController controller = await _controller.future;
-    LocationData? currentLocation;
-    var location = Location();
-    var serviceEnabled = await location.serviceEnabled();
-
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
-      if (!serviceEnabled) {
-        return;
-      }
-    }
-
-    var permissionGranted = await location.hasPermission();
-
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
-
-    try {
-      currentLocation = await location.getLocation();
-    } on Exception {
-      currentLocation = null;
-    }
-    controller.animateCamera(CameraUpdate.newCameraPosition(
-      CameraPosition(
-        bearing: 0,
-        target: LatLng(currentLocation!.latitude!, currentLocation.longitude!),
-        zoom: 17.0,
-      ),
-    ));
+    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+        target: LatLng(currentLocation.latitude ?? defaultLocation.latitude,
+            currentLocation.longitude ?? defaultLocation.longitude),
+        zoom: 15.0)));
   }
 
   void addMarker(LatLng tappedPosition) {
@@ -146,7 +186,7 @@ class MapPageState extends State<MapPage> {
     double widthVariable = MediaQuery.of(context).size.width;
     double heightVariable = MediaQuery.of(context).size.height;
 
-    if (allEventsRead == false) {
+    if (allEventsRead == false || currentLocation == null) {
       return Scaffold(
           body: SizedBox(
         height: heightVariable,
@@ -203,8 +243,10 @@ class MapPageState extends State<MapPage> {
             )),
         const SizedBox(height: 15),
         FloatingActionButton(
-          onPressed: () {
-            _currentLocation();
+          onPressed: () async {
+            await _getCurrentLocation();
+            await getAllEvents();
+            _moveToCurrentLocation();
           },
           child: const Icon(
             Icons.my_location,
@@ -220,8 +262,8 @@ class MapPageState extends State<MapPage> {
           onMapCreated: _onMapCreated,
           markers: Set<Marker>.of(_markers),
           onTap: handleTap,
-          initialCameraPosition: const CameraPosition(
-              target: LatLng(43.55103829955488, -79.66262838104547), zoom: 15)),
+          initialCameraPosition:
+              CameraPosition(target: defaultLocation, zoom: 15)),
     );
   }
 }
