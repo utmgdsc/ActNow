@@ -35,6 +35,8 @@ class _SignupPageState extends State<SignupPage> {
 
         DocumentReference ref = users.doc(userCreds.user!.uid);
 
+        userCreds.user!
+            .updateDisplayName(_firstName.text + " " + _lastName.text);
         ref.set({
           'userid': userCreds.user!.uid,
           'username': _username.text,
