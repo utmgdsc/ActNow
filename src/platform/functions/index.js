@@ -12,7 +12,7 @@ exports.scrapeEventbrite = functions
     timeoutSeconds: 90,
     memory: '1GB',
   })
-  .https.onRequest(async (_, res) => {
+  .https.onRequest(async (req, res) => {
     functions.logger.info('Starting to scrape...');
     let eventsArray = [];
     const webpageUrl = 'https://www.eventbrite.ca';
@@ -26,9 +26,9 @@ exports.scrapeEventbrite = functions
 
     // get request as a parameter from the url
     let city = '';
-    if (_.method === 'GET') {
-      if (_.query.city.length !== 0 && typeof _.query.city !== 'undefined') {
-        city = _.query.city;
+    if (req.method === 'GET') {
+      if (req.query.city.length !== 0 && typeof req.query.city !== 'undefined') {
+        city = req.query.city;
         functions.logger.info('City: ' + city);
       } else {
         functions.logger.error('No city name provided');
