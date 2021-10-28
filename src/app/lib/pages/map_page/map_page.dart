@@ -47,7 +47,9 @@ class MapPageState extends State<MapPage> {
     if (!serviceEnabled) {
       serviceEnabled = await rawLocation.requestService();
       if (!serviceEnabled) {
-        currentLocation = defaultLocation;
+        setState(() {
+          currentLocation = defaultLocation;
+        });
         return;
       }
     }
@@ -57,15 +59,22 @@ class MapPageState extends State<MapPage> {
     if (permissionGranted == PermissionStatus.denied) {
       permissionGranted = await rawLocation.requestPermission();
       if (permissionGranted != PermissionStatus.granted) {
-        currentLocation = defaultLocation;
+        setState(() {
+          currentLocation = defaultLocation;
+        });
         return;
       }
     }
 
     try {
-      currentLocation = await rawLocation.getLocation();
+      var newLocation = await rawLocation.getLocation();
+      setState(() {
+        currentLocation = newLocation;
+      });
     } catch (e) {
-      currentLocation = defaultLocation;
+      setState(() {
+        currentLocation = defaultLocation;
+      });
     }
   }
 
@@ -123,7 +132,10 @@ class MapPageState extends State<MapPage> {
                           eventUid: element.id));
                   Navigator.push(context, route).then((value) => setState(() {
                         if (value != null) {
-                          _markers.removeWhere((marker) => marker.markerId.value == LatLng(value.latitude, value.longitude).toString());
+                          _markers.removeWhere((marker) =>
+                              marker.markerId.value ==
+                              LatLng(value.latitude, value.longitude)
+                                  .toString());
                         }
                       }));
                 },
@@ -262,8 +274,10 @@ class MapPageState extends State<MapPage> {
           onMapCreated: _onMapCreated,
           markers: Set<Marker>.of(_markers),
           onTap: handleTap,
-          initialCameraPosition:
-              CameraPosition(target: defaultLocation, zoom: 15)),
+          initialCameraPosition: CameraPosition(
+              target:
+                  LatLng(currentLocation.latitude, currentLocation.longitude),
+              zoom: 15)),
     );
   }
 }
