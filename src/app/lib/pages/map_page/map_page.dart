@@ -12,13 +12,21 @@ import 'add_event.dart';
 
 class MapPage extends StatefulWidget {
   final User? userCreds;
-  const MapPage({Key? key, required this.userCreds}) : super(key: key);
+  final dynamic userLocation;
+  final Function(dynamic) onUpdateLocation;
+  const MapPage(
+      {Key? key,
+      required this.userCreds,
+      required this.userLocation,
+      required this.onUpdateLocation})
+      : super(key: key);
 
   @override
   MapPageState createState() => MapPageState();
 }
 
 class MapPageState extends State<MapPage> {
+  BitmapDescriptor? userIcon;
   bool addedNewEvent = false;
   Map<String, String> formDetails = {};
   bool allEventsRead = false;
@@ -32,11 +40,24 @@ class MapPageState extends State<MapPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.userLocation == null) {
+      currentLocation = defaultLocation;
+    } else {
+      currentLocation = widget.userLocation;
+    }
     _loadMapData();
+    getIcons();
+  }
+
+  getIcons() async {
+    var icon = await BitmapDescriptor.fromAssetImage(
+        const ImageConfiguration(), "assets/Icon.png");
+    setState(() {
+      userIcon = icon;
+    });
   }
 
   void _loadMapData() async {
-    await _getCurrentLocation();
     await getAllEvents();
   }
 
@@ -47,9 +68,6 @@ class MapPageState extends State<MapPage> {
     if (!serviceEnabled) {
       serviceEnabled = await rawLocation.requestService();
       if (!serviceEnabled) {
-        setState(() {
-          currentLocation = defaultLocation;
-        });
         return;
       }
     }
@@ -59,15 +77,13 @@ class MapPageState extends State<MapPage> {
     if (permissionGranted == PermissionStatus.denied) {
       permissionGranted = await rawLocation.requestPermission();
       if (permissionGranted != PermissionStatus.granted) {
-        setState(() {
-          currentLocation = defaultLocation;
-        });
         return;
       }
     }
 
     try {
       var newLocation = await rawLocation.getLocation();
+      widget.onUpdateLocation(newLocation);
       setState(() {
         currentLocation = newLocation;
       });

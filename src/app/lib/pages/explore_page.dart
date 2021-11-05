@@ -30,7 +30,10 @@ class LocalEventDetails {
 
 class ExplorePage extends StatefulWidget {
   final User? userCreds;
-  const ExplorePage({Key? key, required this.userCreds}) : super(key: key);
+  final dynamic userLocation;
+  const ExplorePage(
+      {Key? key, required this.userCreds, required this.userLocation})
+      : super(key: key);
 
   @override
   ExplorePageState createState() => ExplorePageState();
@@ -43,44 +46,10 @@ class ExplorePageState extends State<ExplorePage> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
-  }
-
-  Future<void> _getCurrentLocation() async {
-    var rawLocation = Location();
-    var serviceEnabled = await rawLocation.serviceEnabled();
-
-    if (!serviceEnabled) {
-      serviceEnabled = await rawLocation.requestService();
-      if (!serviceEnabled) {
-        setState(() {
-          currentLocation = defaultLocation;
-        });
-        return;
-      }
-    }
-
-    var permissionGranted = await rawLocation.hasPermission();
-
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await rawLocation.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        setState(() {
-          currentLocation = defaultLocation;
-        });
-        return;
-      }
-    }
-
-    try {
-      var newLocation = await rawLocation.getLocation();
-      setState(() {
-        currentLocation = newLocation;
-      });
-    } catch (e) {
-      setState(() {
-        currentLocation = defaultLocation;
-      });
+    if (widget.userLocation == null) {
+      currentLocation = defaultLocation;
+    } else {
+      currentLocation = widget.userLocation;
     }
   }
 
