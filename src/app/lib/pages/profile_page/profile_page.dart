@@ -2,14 +2,19 @@ import 'package:actnow/pages/profile_page/contact_us.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:location/location.dart';
 
 import 'personal_info.dart';
 
 class ProfilePage extends StatefulWidget {
   final User? userCreds;
   final Function(User?) onSignOut;
+  final dynamic userLocation;
   const ProfilePage(
-      {Key? key, required this.userCreds, required this.onSignOut})
+      {Key? key,
+      required this.userCreds,
+      required this.onSignOut,
+      required this.userLocation})
       : super(key: key);
 
   Future<void> signOut() async {
@@ -27,22 +32,45 @@ class ProfilePageState extends State<ProfilePage> {
   String? profileURL;
   late Map<String, dynamic>? userInfo;
   bool isSwitched = false;
+  CollectionReference users = FirebaseFirestore.instance.collection('users');
+
+  showBox(String? message, String? title) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title!),
+            content: Text(message!),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    addLocation();
+                  },
+                  child: const Text('OK'))
+            ],
+          );
+        });
+  }
+
+  void addLocation() {
+    DocumentReference ref = users.doc(widget.userCreds!.uid);
+
+    ref.update({'longitude': (widget.userLocation as LocationData).longitude});
+
+    ref.update({'latitude': (widget.userLocation as LocationData).latitude});
+  }
 
   void updateInfo() {
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    firestore
-        .collection('users')
-        .doc(widget.userCreds!.uid)
-        .get()
-        .then((value) => {
-              setState(() {
-                userInfo = value.data();
-                userInfo!["email"] = widget.userCreds!.email;
-                lastName = value.data()!["lastname"];
-                firstName = value.data()!["firstname"];
-                profileURL = value.data()!["profile_picture"];
-              })
-            });
+    users.doc(widget.userCreds!.uid).get().then((value) => {
+          setState(() {
+            userInfo = value.data() as Map<String, dynamic>?;
+            userInfo!["email"] = widget.userCreds!.email;
+            lastName = userInfo!["lastname"];
+            firstName = userInfo!["firstname"];
+            profileURL = userInfo!["profile_picture"];
+          })
+        });
   }
 
   @override
@@ -168,6 +196,11 @@ class ProfilePageState extends State<ProfilePage> {
                             onChanged: (value) {
                               setState(() {
                                 isSwitched = value;
+                                if (isSwitched) {
+                                  showBox(
+                                      "This will make your location public, are you sure?",
+                                      "WARNING");
+                                }
                               });
                             },
                             activeColor: Colors.blue,

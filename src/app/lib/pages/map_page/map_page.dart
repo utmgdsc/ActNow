@@ -30,6 +30,7 @@ class MapPageState extends State<MapPage> {
   bool addedNewEvent = false;
   Map<String, String> formDetails = {};
   bool allEventsRead = false;
+  bool allUsersRead = false;
   final List<Marker> _markers = [];
   final Completer<GoogleMapController> _controller = Completer();
   late LatLng droppedIn;
@@ -40,6 +41,7 @@ class MapPageState extends State<MapPage> {
   @override
   void initState() {
     super.initState();
+    print(widget.userLocation);
     if (widget.userLocation == null) {
       currentLocation = defaultLocation;
     } else {
@@ -59,6 +61,7 @@ class MapPageState extends State<MapPage> {
 
   void _loadMapData() async {
     await getAllEvents();
+    await getAllUsers();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -100,8 +103,33 @@ class MapPageState extends State<MapPage> {
     }
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
-    await getAllEvents();
-    _moveToCurrentLocation();
+  }
+
+  Future<void> getAllUsers() async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    CollectionReference<Map<String, dynamic>> ref =
+        firestore.collection('users');
+
+    await ref.get().then((value) => {
+          value.docs.forEach((element) {
+            var pos = LatLng(element["latitude"], element["longitude"]);
+            var markerToAdd = Marker(
+                icon: userIcon!,
+                markerId: MarkerId(pos.toString()),
+                position: pos,
+                draggable: true,
+                onDragEnd: (dragPos) {
+                  droppedIn = dragPos;
+                });
+            if (!_markers.contains(markerToAdd)) {
+              _markers.add(markerToAdd);
+            }
+          }),
+          setState(() {
+            allUsersRead = true;
+          })
+        });
   }
 
   Future<void> getAllEvents() async {
@@ -214,7 +242,9 @@ class MapPageState extends State<MapPage> {
     double widthVariable = MediaQuery.of(context).size.width;
     double heightVariable = MediaQuery.of(context).size.height;
 
-    if (allEventsRead == false || currentLocation == null) {
+    if (allEventsRead == false ||
+        allUsersRead == false ||
+        currentLocation == null) {
       return Scaffold(
           body: SizedBox(
         height: heightVariable,
@@ -272,9 +302,8 @@ class MapPageState extends State<MapPage> {
         const SizedBox(height: 15),
         FloatingActionButton(
           onPressed: () async {
-            await _getCurrentLocation();
-            await getAllEvents();
-            _moveToCurrentLocation();
+            _getCurrentLocation()
+                .then((value) => {_loadMapData(), _moveToCurrentLocation()});
           },
           child: const Icon(
             Icons.my_location,
@@ -285,7 +314,6 @@ class MapPageState extends State<MapPage> {
       ]),
       body: GoogleMap(
           myLocationButtonEnabled: false,
-          myLocationEnabled: true,
           zoomControlsEnabled: false,
           onMapCreated: _onMapCreated,
           markers: Set<Marker>.of(_markers),

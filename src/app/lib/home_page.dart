@@ -24,6 +24,23 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   dynamic currentLocation;
+  dynamic screens;
+  int _selectedIndex = 0;
+
+  List getScreens(dynamic currLoc) {
+    return [
+      MapPage(
+          userCreds: widget.userCreds,
+          userLocation: currLoc,
+          onUpdateLocation: (newLoc) => onRefresh(newLoc)),
+      ExplorePage(userCreds: widget.userCreds, userLocation: currLoc),
+      const SavedPage(),
+      ProfilePage(
+          userCreds: widget.userCreds,
+          onSignOut: widget.onSignOut,
+          userLocation: currLoc)
+    ];
+  }
 
   void _getCurrentLocation() async {
     var rawLocation = Location();
@@ -33,6 +50,9 @@ class _HomePageState extends State<HomePage> {
       serviceEnabled = await rawLocation.requestService();
       if (!serviceEnabled) {
         currentLocation = null;
+        setState(() {
+          screens = getScreens(currentLocation);
+        });
         return;
       }
     }
@@ -43,15 +63,23 @@ class _HomePageState extends State<HomePage> {
       permissionGranted = await rawLocation.requestPermission();
       if (permissionGranted != PermissionStatus.granted) {
         currentLocation = null;
+        setState(() {
+          screens = getScreens(currentLocation);
+        });
         return;
       }
     }
 
     try {
       var newLocation = await rawLocation.getLocation();
-      currentLocation = newLocation;
+      setState(() {
+        screens = getScreens(newLocation);
+      });
     } catch (e) {
       currentLocation = null;
+      setState(() {
+        screens = getScreens(currentLocation);
+      });
     }
   }
 
@@ -64,28 +92,18 @@ class _HomePageState extends State<HomePage> {
             onUpdateLocation: (newLoc) => onRefresh(newLoc)),
         ExplorePage(userCreds: widget.userCreds, userLocation: newLocation),
         const SavedPage(),
-        ProfilePage(userCreds: widget.userCreds, onSignOut: widget.onSignOut)
+        ProfilePage(
+            userCreds: widget.userCreds,
+            onSignOut: widget.onSignOut,
+            userLocation: currentLocation)
       ];
     });
   }
-
-  dynamic screens;
-
-  int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
-    screens = [
-      MapPage(
-          userCreds: widget.userCreds,
-          userLocation: currentLocation,
-          onUpdateLocation: (newLoc) => onRefresh(newLoc)),
-      ExplorePage(userCreds: widget.userCreds, userLocation: currentLocation),
-      const SavedPage(),
-      ProfilePage(userCreds: widget.userCreds, onSignOut: widget.onSignOut)
-    ];
   }
 
   void _onItemTapped(int index) {
@@ -96,6 +114,19 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    double widthVariable = MediaQuery.of(context).size.width;
+    double heightVariable = MediaQuery.of(context).size.height;
+
+    if (screens == null) {
+      return Scaffold(
+          body: SizedBox(
+        height: heightVariable,
+        width: widthVariable,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ));
+    }
     return Scaffold(
       body: Center(
         child: screens[_selectedIndex],
