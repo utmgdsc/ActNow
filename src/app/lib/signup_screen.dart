@@ -33,7 +33,11 @@ class _SignupPageState extends State<SignupPage> {
             .createUserWithEmailAndPassword(
                 email: _userEmail.text, password: _userPassword.text);
 
-        users.add({
+        DocumentReference ref = users.doc(userCreds.user!.uid);
+
+        userCreds.user!
+            .updateDisplayName(_firstName.text + " " + _lastName.text);
+        ref.set({
           'userid': userCreds.user!.uid,
           'username': _username.text,
           'firstname': _firstName.text,

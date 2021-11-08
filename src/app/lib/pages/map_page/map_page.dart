@@ -1,40 +1,284 @@
-// ignore_for_file: prefer_const_constructors
-
+import 'dart:async';
+import 'dart:io';
+import 'package:actnow/pages/event_details.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_geocoding/google_geocoding.dart' as google_geocoding;
+import 'package:location/location.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'add_event.dart';
 
 class MapPage extends StatefulWidget {
-  const MapPage({Key? key}) : super(key: key);
+  final User? userCreds;
+  const MapPage({Key? key, required this.userCreds}) : super(key: key);
 
   @override
   MapPageState createState() => MapPageState();
 }
 
 class MapPageState extends State<MapPage> {
-  Set<Marker> _markers = {};
+  bool addedNewEvent = false;
+  Map<String, String> formDetails = {};
+  bool allEventsRead = false;
+  final List<Marker> _markers = [];
+  final Completer<GoogleMapController> _controller = Completer();
+  late LatLng droppedIn;
+  bool disableAddEvent = false;
+  var currentLocation;
+  LatLng defaultLocation = const LatLng(43.55103829955488, -79.66262838104547);
 
-  void _onMapCreated(GoogleMapController controller) {
+  @override
+  void initState() {
+    super.initState();
+    _loadMapData();
+  }
+
+  void _loadMapData() async {
+    await _getCurrentLocation();
+    await getAllEvents();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    var rawLocation = Location();
+    var serviceEnabled = await rawLocation.serviceEnabled();
+
+    if (!serviceEnabled) {
+      serviceEnabled = await rawLocation.requestService();
+      if (!serviceEnabled) {
+        setState(() {
+          currentLocation = defaultLocation;
+        });
+        return;
+      }
+    }
+
+    var permissionGranted = await rawLocation.hasPermission();
+
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await rawLocation.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
+        setState(() {
+          currentLocation = defaultLocation;
+        });
+        return;
+      }
+    }
+
+    try {
+      var newLocation = await rawLocation.getLocation();
+      setState(() {
+        currentLocation = newLocation;
+      });
+    } catch (e) {
+      setState(() {
+        currentLocation = defaultLocation;
+      });
+    }
+  }
+
+  Future<void> _onMapCreated(GoogleMapController controller) async {
+    if (!_controller.isCompleted) {
+      _controller.complete(controller);
+    }
     controller.setMapStyle(
         MapStyle.someLandMarks); //TODO: Allow users to choose their theme
+    await getAllEvents();
+    _moveToCurrentLocation();
+  }
+
+  Future<void> getAllEvents() async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    late google_geocoding.GoogleGeocoding googleGeocoding;
+    String? city;
+
+    if (Platform.isAndroid) {
+      googleGeocoding =
+          google_geocoding.GoogleGeocoding(dotenv.env["API_KEY_ANDRIOD"]!);
+    } else if (Platform.isIOS) {
+      googleGeocoding =
+          google_geocoding.GoogleGeocoding(dotenv.env["API_KEY_IOS"]!);
+    }
+    var result = await googleGeocoding.geocoding.getReverse(
+        google_geocoding.LatLon(
+            currentLocation!.latitude!, currentLocation.longitude!));
+
+    List<String> splitAddress =
+        result!.results![0].formattedAddress!.split(',');
+
+    if (splitAddress.length >= 5) {
+      city = splitAddress[2].trim();
+    } else if (splitAddress.length == 3) {
+      var formatAddress = splitAddress[0].split(" ")[1];
+      city = formatAddress.trim();
+    } else {
+      city = splitAddress[1].trim();
+    }
+
+    CollectionReference<Map<String, dynamic>> ref =
+        firestore.collection('events').doc("custom").collection(city);
+
+    await ref.get().then((value) => {
+          value.docs.forEach((element) {
+            var pos = LatLng(element["latitude"], element["longitude"]);
+            var markerToAdd = Marker(
+                markerId: MarkerId(pos.toString()),
+                onTap: () {
+                  Route route = MaterialPageRoute(
+                      builder: (context) => EventDetails(
+                          userCreds: widget.userCreds,
+                          collectionRef: ref,
+                          eventUid: element.id));
+                  Navigator.push(context, route).then((value) => setState(() {
+                        if (value != null) {
+                          _markers.removeWhere((marker) =>
+                              marker.markerId.value ==
+                              LatLng(value.latitude, value.longitude)
+                                  .toString());
+                        }
+                      }));
+                },
+                position: pos,
+                draggable: true,
+                onDragEnd: (dragPos) {
+                  droppedIn = dragPos;
+                });
+            if (!_markers.contains(markerToAdd)) {
+              _markers.add(markerToAdd);
+            }
+          }),
+          setState(() {
+            allEventsRead = true;
+          })
+        });
+  }
+
+  void _moveToCurrentLocation() async {
+    final GoogleMapController controller = await _controller.future;
+    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+        target: LatLng(currentLocation.latitude ?? defaultLocation.latitude,
+            currentLocation.longitude ?? defaultLocation.longitude),
+        zoom: 15.0)));
+  }
+
+  void addMarker(LatLng tappedPosition) {
     setState(() {
       //here we could maybe loop through all our current events and add to map
+      droppedIn = tappedPosition;
       _markers.add(Marker(
-          markerId: MarkerId("event1"),
-          position: LatLng(43.55103829955488, -79.66262838104547),
-          infoWindow: InfoWindow(
-              title: "Event number 1", snippet: "event number 1 description")));
+          markerId: const MarkerId("New Event"),
+          position: tappedPosition,
+          draggable: true,
+          onDragEnd: (dragPos) {
+            droppedIn = dragPos;
+          }));
+
+      disableAddEvent = true;
     });
+  }
+
+  void handleTap(LatLng tappedPosition) {
+    if (addedNewEvent == false) {
+      addMarker(tappedPosition);
+      addedNewEvent = true;
+    } else if (addedNewEvent = true && _markers.remove(_markers.last)) {
+      addMarker(tappedPosition);
+    }
+  }
+
+  void clearAddedMarker() {
+    _markers.remove(_markers.last);
+    addedNewEvent = false;
+    disableAddEvent = false;
   }
 
   @override
   Widget build(BuildContext context) {
+    double widthVariable = MediaQuery.of(context).size.width;
+    double heightVariable = MediaQuery.of(context).size.height;
+
+    if (allEventsRead == false || currentLocation == null) {
+      return Scaffold(
+          body: SizedBox(
+        height: heightVariable,
+        width: widthVariable,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ));
+    }
     return Scaffold(
-        body: GoogleMap(
-            onMapCreated: _onMapCreated,
-            markers: _markers,
-            initialCameraPosition: CameraPosition(
-                target: LatLng(43.55103829955488, -79.66262838104547),
-                zoom: 15)));
+      floatingActionButton:
+          Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+        Visibility(
+            visible: disableAddEvent,
+            child: FloatingActionButton(
+              heroTag: "btn2",
+              onPressed: () {
+                Route route = MaterialPageRoute(
+                    builder: (context) => AddEvent(
+                          userCreds: widget.userCreds,
+                          droppedPin: droppedIn,
+                          updateEvent: null,
+                          formDetail: formDetails,
+                        ));
+                Navigator.push(context, route).then((value) => {
+                      if (value == "Added")
+                        {
+                          formDetails = {},
+                          clearAddedMarker(),
+                          getAllEvents(),
+                        }
+                      else if (value != null)
+                        {
+                          formDetails = value,
+                        }
+                      else
+                        {
+                          formDetails = {},
+                          if (_markers.remove(_markers.last))
+                            {
+                              setState(() {
+                                addedNewEvent = false;
+                                disableAddEvent = false;
+                              })
+                            }
+                        }
+                    });
+              },
+              child: const Icon(
+                Icons.add,
+                color: Colors.blue,
+              ),
+              backgroundColor: Colors.white,
+            )),
+        const SizedBox(height: 15),
+        FloatingActionButton(
+          onPressed: () async {
+            await _getCurrentLocation();
+            await getAllEvents();
+            _moveToCurrentLocation();
+          },
+          child: const Icon(
+            Icons.my_location,
+            color: Colors.blue,
+          ),
+          backgroundColor: Colors.white,
+        ),
+      ]),
+      body: GoogleMap(
+          myLocationButtonEnabled: false,
+          myLocationEnabled: true,
+          zoomControlsEnabled: false,
+          onMapCreated: _onMapCreated,
+          markers: Set<Marker>.of(_markers),
+          onTap: handleTap,
+          initialCameraPosition: CameraPosition(
+              target:
+                  LatLng(currentLocation.latitude, currentLocation.longitude),
+              zoom: 15)),
+    );
   }
 }
 

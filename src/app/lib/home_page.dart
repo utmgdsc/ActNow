@@ -1,8 +1,8 @@
-import 'package:actnow/pages/map_page.dart';
+import 'package:actnow/pages/map_page/map_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'pages/map_page.dart';
-import 'pages/profile_page.dart';
+import 'pages/profile_page/profile_page.dart';
+import 'pages/map_page/map_page.dart';
 import 'pages/explore_page.dart';
 import 'pages/saved_page.dart';
 
@@ -25,16 +25,14 @@ class _HomePageState extends State<HomePage> {
   dynamic screens;
 
   int _selectedIndex = 0;
-  static const TextStyle optionStyle =
-      TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
 
   @override
   void initState() {
     super.initState();
     screens = [
-      MapPage(),
-      ExplorePage(),
-      SavedPage(),
+      MapPage(userCreds: widget.userCreds),
+      ExplorePage(userCreds: widget.userCreds),
+      const SavedPage(),
       ProfilePage(userCreds: widget.userCreds, onSignOut: widget.onSignOut)
     ];
   }
