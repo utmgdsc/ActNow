@@ -9,12 +9,13 @@ const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 exports.scrapeEventbrite = functions
   .runWith({
-    timeoutSeconds: 30,
-    memory: '1GB',
+    timeoutSeconds: 120,
+    memory: '2GB',
   })
   .https.onRequest(async (_, res) => {
     functions.logger.info('Starting to scrape...');
     let eventsArray = [];
+    const collectiveEventsArray = [];
 
     (async () => {
       const cluster = await Cluster.launch({
@@ -75,28 +76,30 @@ exports.scrapeEventbrite = functions
         } else {
           functions.logger.info('Number of scrapper events:', eventsArray.length);
         }
-
-        eventsArray.forEach((event) => {
-          (async () => {
-            await admin
-              .firestore()
-              .collection('events')
-              .doc('eventbrite')
-              .collection('toronto')
-              .add(event);
-          })();
-        });
+        return eventsArray;
       });
 
-      cluster.queue('https://www.eventbrite.ca/d/Toronto/all-events/?page=1');
-      cluster.queue('https://www.eventbrite.ca/d/Toronto/all-events/?page=2');
-      cluster.queue('https://www.eventbrite.ca/d/Toronto/all-events/?page=3');
+      const eventArray1 = await Promise.all(await cluster.queue('https://www.eventbrite.ca/d/Toronto/all-events/?page=1'));
+      const eventArray2 = await Promise.all(await cluster.queue('https://www.eventbrite.ca/d/Toronto/all-events/?page=2'));
+      const eventArray3 = await Promise.all(await cluster.queue('https://www.eventbrite.ca/d/Toronto/all-events/?page=3'));
       // many more pages
-
+      collectiveEventsArray.concat(eventArray1, eventArray2, eventArray3);
+      functions.logger.info('startomg upload');
+      functions.logger.info(collectiveEventsArray);
+      collectiveEventsArray.forEach((event) => {
+        functions.logger.info('adding in progress');
+        (async () => {
+          await admin
+            .firestore()
+            .collection('events')
+            .doc('eventbrite')
+            .collection('toronto')
+            .add(event);
+        })();
+        functions.logger.info('Uploaded to firestore');
+      });
+      res.send(collectiveEventsArray);
       await cluster.idle();
       await cluster.close();
     })();
-
-    functions.logger.info('Uploaded to firestore');
-    res.send(eventsArray);
   });
