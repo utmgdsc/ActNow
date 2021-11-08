@@ -17,6 +17,10 @@ exports.scrapeEventbrite = functions
     let eventsArray = [];
     let collectiveEventsArray = [];
 
+    /** This is a bug with firestore. For some reason, if you try to write to a nested
+     * collection, it will not work, unless you write to the parent collection first. */
+    await admin.firestore().collection('events').doc('scraped-events').set({});
+
     const cluster = await Cluster.launch({
       concurrency: Cluster.CONCURRENCY_CONTEXT,
       maxConcurrency: 3,
@@ -114,7 +118,8 @@ exports.scrapeEventbrite = functions
             .collection('events')
             .doc('scraped-events')
             .collection('toronto')
-            .add(event);
+            .add(event)
+            .catch((err) => functions.logger.info(err));
         })();
       });
       functions.logger.info('Uploaded to firestore');
