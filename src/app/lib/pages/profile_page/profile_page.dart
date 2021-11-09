@@ -31,7 +31,7 @@ class ProfilePageState extends State<ProfilePage> {
   String? lastName;
   String? profileURL;
   late Map<String, dynamic>? userInfo;
-  bool isSwitched = false;
+  bool? isSwitched;
   CollectionReference users = FirebaseFirestore.instance.collection('users');
 
   showBox(String? message, String? title) {
@@ -42,6 +42,15 @@ class ProfilePageState extends State<ProfilePage> {
             title: Text(title!),
             content: Text(message!),
             actions: <Widget>[
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      updateSwitch();
+                      isSwitched = !isSwitched!;
+                    });
+                  },
+                  child: const Text('Cancel')),
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -69,8 +78,19 @@ class ProfilePageState extends State<ProfilePage> {
             lastName = userInfo!["lastname"];
             firstName = userInfo!["firstname"];
             profileURL = userInfo!["profile_picture"];
+            isSwitched = userInfo!["isSwitched"];
           })
         });
+  }
+
+  void updateSwitch() {
+    DocumentReference ref = users.doc(widget.userCreds!.uid);
+
+    if (isSwitched!) {
+      ref.update({'isSwitched': false});
+    } else {
+      ref.update({'isSwitched': true});
+    }
   }
 
   @override
@@ -192,11 +212,12 @@ class ProfilePageState extends State<ProfilePage> {
                         Row(children: [
                           const Text("Public Account"),
                           Switch(
-                            value: isSwitched,
+                            value: isSwitched!,
                             onChanged: (value) {
                               setState(() {
+                                updateSwitch();
                                 isSwitched = value;
-                                if (isSwitched) {
+                                if (isSwitched!) {
                                   showBox(
                                       "This will make your location public, are you sure?",
                                       "WARNING");
