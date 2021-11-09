@@ -10,11 +10,13 @@ class ProfilePage extends StatefulWidget {
   final User? userCreds;
   final Function(User?) onSignOut;
   final dynamic userLocation;
+  final Function(bool) onUpdateProfile;
   const ProfilePage(
       {Key? key,
       required this.userCreds,
       required this.onSignOut,
-      required this.userLocation})
+      required this.userLocation,
+      required this.onUpdateProfile})
       : super(key: key);
 
   Future<void> signOut() async {
@@ -85,12 +87,12 @@ class ProfilePageState extends State<ProfilePage> {
 
   void updateSwitch() {
     DocumentReference ref = users.doc(widget.userCreds!.uid);
-
     if (isSwitched!) {
       ref.update({'isSwitched': false});
     } else {
       ref.update({'isSwitched': true});
     }
+    widget.onUpdateProfile(!isSwitched!);
   }
 
   @override

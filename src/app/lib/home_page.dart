@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:actnow/pages/map_page/map_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:location/location.dart';
@@ -26,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   dynamic currentLocation;
   dynamic screens;
   int _selectedIndex = 0;
+  Timer? timer;
 
   List getScreens(dynamic currLoc) {
     return [
@@ -38,11 +42,35 @@ class _HomePageState extends State<HomePage> {
       ProfilePage(
           userCreds: widget.userCreds,
           onSignOut: widget.onSignOut,
-          userLocation: currLoc)
+          userLocation: currLoc,
+          onUpdateProfile: (publicSwitch) => locationTimer(publicSwitch))
     ];
   }
 
-  void _getCurrentLocation() async {
+  void updateLocation() {
+    CollectionReference users = FirebaseFirestore.instance.collection('users');
+    DocumentReference ref = users.doc(widget.userCreds!.uid);
+  
+    ref.update({'longitude': (currentLocation as LocationData).longitude});
+
+    ref.update({'latitude': (currentLocation as LocationData).latitude});
+  }
+
+  void locationTimer(bool publicSwitch) {
+    if (publicSwitch) {
+      print("test");
+      timer = Timer.periodic(const Duration(seconds: 10), (timer) {
+        print("test");
+        _getCurrentLocation().then((value) => updateLocation());
+      });
+    } else {
+      if (timer != null) {
+        timer!.cancel();
+      }
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
     var rawLocation = Location();
     var serviceEnabled = await rawLocation.serviceEnabled();
 
@@ -72,6 +100,7 @@ class _HomePageState extends State<HomePage> {
 
     try {
       var newLocation = await rawLocation.getLocation();
+      currentLocation = newLocation;
       setState(() {
         screens = getScreens(newLocation);
       });
@@ -95,7 +124,8 @@ class _HomePageState extends State<HomePage> {
         ProfilePage(
             userCreds: widget.userCreds,
             onSignOut: widget.onSignOut,
-            userLocation: currentLocation)
+            userLocation: currentLocation,
+            onUpdateProfile: (publicSwitch) => locationTimer(publicSwitch))
       ];
     });
   }
