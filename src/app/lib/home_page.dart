@@ -28,7 +28,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   dynamic currentLocation;
   dynamic screens;
+  late Map<String, dynamic>? userInfo;
+  bool swtichStatus = false;
   int _selectedIndex = 0;
+  CollectionReference users = FirebaseFirestore.instance.collection('users');
   Timer? timer;
 
   List getScreens(dynamic currLoc) {
@@ -42,31 +45,48 @@ class _HomePageState extends State<HomePage> {
       ProfilePage(
           userCreds: widget.userCreds,
           onSignOut: widget.onSignOut,
-          userLocation: currLoc,
           onUpdateProfile: (publicSwitch) => locationTimer(publicSwitch))
     ];
   }
 
+  void getSwitchStatus() {
+    users.doc(widget.userCreds!.uid).get().then((value) => {
+          setState(() {
+            userInfo = value.data() as Map<String, dynamic>?;
+            swtichStatus = userInfo!["isSwitched"];
+            if (swtichStatus) {
+              _getCurrentLocation().then((value) => updateLocation());
+            }
+          })
+        });
+  }
+
   void updateLocation() {
-    CollectionReference users = FirebaseFirestore.instance.collection('users');
     DocumentReference ref = users.doc(widget.userCreds!.uid);
-  
+
     ref.update({'longitude': (currentLocation as LocationData).longitude});
 
     ref.update({'latitude': (currentLocation as LocationData).latitude});
   }
 
+  void removeLocation() {
+    DocumentReference ref = users.doc(widget.userCreds!.uid);
+
+    ref.update({'longitude': FieldValue.delete()});
+
+    ref.update({'latitude': FieldValue.delete()});
+  }
+
   void locationTimer(bool publicSwitch) {
-    if (publicSwitch) {
-      print("test");
-      timer = Timer.periodic(const Duration(seconds: 10), (timer) {
-        print("test");
+    if (publicSwitch && timer == null) {
+      timer = Timer.periodic(const Duration(minutes: 5), (timer) {
         _getCurrentLocation().then((value) => updateLocation());
       });
     } else {
       if (timer != null) {
         timer!.cancel();
       }
+      removeLocation();
     }
   }
 
@@ -124,7 +144,6 @@ class _HomePageState extends State<HomePage> {
         ProfilePage(
             userCreds: widget.userCreds,
             onSignOut: widget.onSignOut,
-            userLocation: currentLocation,
             onUpdateProfile: (publicSwitch) => locationTimer(publicSwitch))
       ];
     });
@@ -134,6 +153,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+    getSwitchStatus();
   }
 
   void _onItemTapped(int index) {

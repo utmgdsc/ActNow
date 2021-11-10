@@ -113,17 +113,19 @@ class MapPageState extends State<MapPage> {
 
     await ref.get().then((value) => {
           value.docs.forEach((element) {
-            var pos = LatLng(element["latitude"], element["longitude"]);
-            var markerToAdd = Marker(
-                icon: userIcon!,
-                markerId: MarkerId(pos.toString()),
-                position: pos,
-                draggable: true,
-                onDragEnd: (dragPos) {
-                  droppedIn = dragPos;
-                });
-            if (!_markers.contains(markerToAdd)) {
-              _markers.add(markerToAdd);
+            if (element.data().containsKey("latitude")) {
+              var pos = LatLng(element["latitude"], element["longitude"]);
+              var markerToAdd = Marker(
+                  icon: userIcon!,
+                  markerId: MarkerId(pos.toString()),
+                  position: pos,
+                  draggable: true,
+                  onDragEnd: (dragPos) {
+                    droppedIn = dragPos;
+                  });
+              if (!_markers.contains(markerToAdd)) {
+                _markers.add(markerToAdd);
+              }
             }
           }),
           setState(() {

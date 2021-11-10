@@ -9,13 +9,11 @@ import 'personal_info.dart';
 class ProfilePage extends StatefulWidget {
   final User? userCreds;
   final Function(User?) onSignOut;
-  final dynamic userLocation;
   final Function(bool) onUpdateProfile;
   const ProfilePage(
       {Key? key,
       required this.userCreds,
       required this.onSignOut,
-      required this.userLocation,
       required this.onUpdateProfile})
       : super(key: key);
 
@@ -64,12 +62,50 @@ class ProfilePageState extends State<ProfilePage> {
         });
   }
 
+  Future<LocationData?> _getCurrentLocation() async {
+    var rawLocation = Location();
+    var serviceEnabled = await rawLocation.serviceEnabled();
+
+    if (!serviceEnabled) {
+      serviceEnabled = await rawLocation.requestService();
+      if (!serviceEnabled) {
+        return null;
+      }
+    }
+
+    var permissionGranted = await rawLocation.hasPermission();
+
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await rawLocation.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
+        return null;
+      }
+    }
+
+    try {
+      var newLocation = await rawLocation.getLocation();
+      return newLocation;
+    } catch (e) {
+      return null;
+    }
+  }
+
   void addLocation() {
     DocumentReference ref = users.doc(widget.userCreds!.uid);
-
-    ref.update({'longitude': (widget.userLocation as LocationData).longitude});
-
-    ref.update({'latitude': (widget.userLocation as LocationData).latitude});
+    _getCurrentLocation().then((value) => {
+          if (value != null)
+            {
+              ref.update({'longitude': value.longitude}),
+              ref.update({'latitude': value.latitude}),
+            }
+          else
+            {
+              setState(() {
+                updateSwitch();
+                isSwitched = !isSwitched!;
+              })
+            }
+        });
   }
 
   void updateInfo() {
