@@ -12,7 +12,7 @@ exports.scrapeEventbrite = functions
     timeoutSeconds: 60,
     memory: '1GB',
   })
-  .https.onRequest(async (_, res) => {
+  .https.onRequest(async (req, res) => {
     functions.logger.info('Starting to scrape...');
     let eventsArray = [];
     let collectiveEventsArray = [];
@@ -20,6 +20,16 @@ exports.scrapeEventbrite = functions
     /** This is a bug with firestore. For some reason, if you try to write to a nested
      * collection, it will not work, unless you write to the parent collection first. */
     await admin.firestore().collection('events').doc('scraped-events').set({});
+
+    let city = '';
+    if (req.method === 'GET') {
+      if (req.query.city.length !== 0 && typeof req.query.city !== 'undefined') {
+        city = req.query.city;
+        functions.logger.info('City: ' + city);
+      } else {
+        functions.logger.error('No city name provided');
+      }
+    }
 
     const cluster = await Cluster.launch({
       concurrency: Cluster.CONCURRENCY_CONTEXT,
@@ -97,9 +107,9 @@ exports.scrapeEventbrite = functions
     });
 
     collectiveEventsArray = await Promise.all([
-      cluster.execute('https://www.eventbrite.ca/d/Toronto/all-events/?page=1'),
-      cluster.execute('https://www.eventbrite.ca/d/Toronto/all-events/?page=2'),
-      cluster.execute('https://www.eventbrite.ca/d/Toronto/all-events/?page=3'),
+      cluster.execute('https://www.eventbrite.ca/d/'+ city + '/all-events/?page=1'),
+      cluster.execute('https://www.eventbrite.ca/d/' + city + '/all-events/?page=2'),
+      cluster.execute('https://www.eventbrite.ca/d/' + city + '/all-events/?page=3'),
     ]);
 
     await cluster.idle();
@@ -117,7 +127,7 @@ exports.scrapeEventbrite = functions
             .firestore()
             .collection('events')
             .doc('scraped-events')
-            .collection('toronto')
+            .collection(city)
             .add(event)
             .catch((err) => functions.logger.info(err));
         })();
