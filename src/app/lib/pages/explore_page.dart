@@ -17,6 +17,7 @@ class LocalEventDetails {
   final int? num_attendees;
   final String? id;
   final CollectionReference? ref;
+  final bool? saved;
 
   LocalEventDetails(
       {this.title,
@@ -25,7 +26,8 @@ class LocalEventDetails {
       this.num_attendees,
       this.img_location,
       this.id,
-      this.ref});
+      this.ref,
+      this.saved});
 }
 
 class ExplorePage extends StatefulWidget {
@@ -44,6 +46,24 @@ class ExplorePageState extends State<ExplorePage> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+  }
+
+  late Map<String, dynamic>? userInfo;
+  var saved_list;
+
+  void updateInfo() {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    firestore
+        .collection('users')
+        .doc(widget.userCreds!.uid)
+        .get()
+        .then((value) => {
+              setState(() {
+                userInfo = value.data();
+                //userInfo!["email"] = widget.userCreds!.email;
+                saved_list = value.data()!["saved_events"];
+              })
+            });
   }
 
   Future<void> _getCurrentLocation() async {
@@ -115,6 +135,15 @@ class ExplorePageState extends State<ExplorePage> {
     CollectionReference<Map<String, dynamic>> events =
         firestore.collection('events').doc("custom").collection(city);
 
+    updateInfo();
+
+    print(saved_list);
+    //print(saved_list.runtimeType);
+
+    saved_list.forEach((element) {
+      print(element);
+    });
+
     List<LocalEventDetails> eventsList = <LocalEventDetails>[];
     await events.get().then((value) => {
           value.docs.forEach((element) {
@@ -125,7 +154,8 @@ class ExplorePageState extends State<ExplorePage> {
                 date_time: element['dateTime'],
                 creator: element['createdByName'],
                 id: element.id,
-                ref: events));
+                ref: events,
+                saved: isElementSaved(element.id)));
           })
         });
 
@@ -173,15 +203,16 @@ class ExplorePageState extends State<ExplorePage> {
                                 Navigator.push(context, route)
                                     .then((value) => setState(() {}));
                               },
+                              onDoubleTap: () {},
                               child: EventWidget(
-                                title: snapshot.data![index].title,
-                                creator: snapshot.data![index].creator,
-                                date_time: snapshot.data![index].date_time,
-                                num_attendees:
-                                    snapshot.data![index].num_attendees,
-                                img_location:
-                                    snapshot.data![index].img_location,
-                              ),
+                                  title: snapshot.data![index].title,
+                                  creator: snapshot.data![index].creator,
+                                  date_time: snapshot.data![index].date_time,
+                                  num_attendees:
+                                      snapshot.data![index].num_attendees,
+                                  img_location:
+                                      snapshot.data![index].img_location,
+                                  saved: snapshot.data![index].saved),
                             );
                           });
                     },
@@ -189,5 +220,17 @@ class ExplorePageState extends State<ExplorePage> {
                 ),
               ],
             )));
+  }
+
+  bool isElementSaved(String id) {
+    print(id);
+    saved_list.forEach((element) {
+      print(id == element);
+      if (element.toString() == id) {
+        return true;
+      }
+    });
+
+    return false;
   }
 }
