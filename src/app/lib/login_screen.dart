@@ -261,6 +261,7 @@ class _LoginPageState extends State<LoginPage> {
         'userid': user.uid,
         'username': user.email,
         'firstname': user.displayName,
+        "isSwitched": false,
         'lastname': "",
         'profile_picture': user.photoURL,
       });
