@@ -130,5 +130,5 @@ exports.scrapeEventbrite = functions
       functions.logger.info('Uploaded to firestore');
     });
     res.send(collectiveEventsArray);
-    return functions.logger.info('Scraping Successful');
+   functions.logger.info('Scraping Successful');
   });
