@@ -102,9 +102,9 @@ exports.scrapeEventbrite = functions
     });
 
     collectiveEventsArray = await Promise.all([
-      cluster.execute('https://www.eventbrite.ca/d/' + city + '/all-events/?page=1'),
-      cluster.execute('https://www.eventbrite.ca/d/' + city + '/all-events/?page=2'),
-      cluster.execute('https://www.eventbrite.ca/d/' + city + '/all-events/?page=3'),
+      cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=1`),
+      cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=2`),
+      cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=3`),
     ]);
 
     await cluster.idle();
