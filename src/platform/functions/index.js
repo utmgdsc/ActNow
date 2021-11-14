@@ -18,7 +18,7 @@ exports.scrapeEventbrite = functions
 
     let city = '';
     if (req.method === 'GET') {
-      if (req.query.city.length !== 0 && typeof req.query.city !== 'undefined') {
+      if (req.query.city && req.query.city.length !== 0) {
         city = req.query.city;
         functions.logger.info('City: ' + city);
       } else {
