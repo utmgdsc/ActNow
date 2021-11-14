@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
   (async () => {
     const webpageUrl = 'https://www.eventbrite.ca';
 
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
     await page.setViewport({
       width: 1920,
@@ -22,13 +22,11 @@ app.get('/', (req, res) => {
 
     await page.goto(webpageUrl, { waitUntil: 'networkidle2' });
 
-    await timeout(3000);
-
     await page.type('#locationPicker', 'Toronto');
 
     await page.keyboard.press('Enter');
 
-    await timeout(3000);
+    await timeout(2000);
 
     eventsArray = await page.evaluate(() => {
       const events = [];
@@ -71,6 +69,7 @@ app.get('/', (req, res) => {
       }
 
       return events;
+      
     });
 
     console.log(eventsArray);

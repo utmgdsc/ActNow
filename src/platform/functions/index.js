@@ -1,5 +1,4 @@
 const functions = require('firebase-functions');
-// const puppeteer = require('puppeteer');
 const admin = require('firebase-admin');
 const { Cluster } = require('puppeteer-cluster');
 
@@ -23,12 +22,9 @@ exports.scrapeEventbrite = functions
         city = req.query.city;
         functions.logger.info('City: ' + city);
       } else {
-        functions.logger.error('No city name provided');
+        return functions.logger.error('No city name provided');
       }
     }
-    /** This is a bug with firestore. For some reason, if you try to write to a nested
-     * collection, it will not work, unless you write to the parent collection first. */
-    await admin.firestore().collection('events').doc('scraped-events').set({});
 
     const cluster = await Cluster.launch({
       concurrency: Cluster.CONCURRENCY_CONTEXT,
@@ -106,9 +102,9 @@ exports.scrapeEventbrite = functions
     });
 
     collectiveEventsArray = await Promise.all([
-      cluster.execute('https://www.eventbrite.ca/d/' + city +'/all-events/?page=1'),
-      cluster.execute('https://www.eventbrite.ca/d/' + city +'/all-events/?page=2'),
-      cluster.execute('https://www.eventbrite.ca/d/' + city +'/all-events/?page=3'),
+      cluster.execute('https://www.eventbrite.ca/d/' + city + '/all-events/?page=1'),
+      cluster.execute('https://www.eventbrite.ca/d/' + city + '/all-events/?page=2'),
+      cluster.execute('https://www.eventbrite.ca/d/' + city + '/all-events/?page=3'),
     ]);
 
     await cluster.idle();
@@ -134,4 +130,5 @@ exports.scrapeEventbrite = functions
       functions.logger.info('Uploaded to firestore');
     });
     res.send(collectiveEventsArray);
+    return functions.logger.info('Scraping Successful');
   });
