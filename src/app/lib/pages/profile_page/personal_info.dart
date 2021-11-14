@@ -61,7 +61,7 @@ class PersonalInfoState extends State<PersonalInfo> {
         var imageUrl = await fileRef.getDownloadURL();
 
         var dataMap = data.data() as Map<String, dynamic>;
-        if (dataMap.containsKey("profile_picture")) {
+        if (dataMap.containsKey("profile_picture") && dataMap["profile_picture"].toString().length > 110) {
           await FirebaseStorage.instance
               .refFromURL(dataMap["profile_picture"])
               .delete();
