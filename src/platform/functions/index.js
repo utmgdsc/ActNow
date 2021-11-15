@@ -112,7 +112,6 @@ exports.scrapeEventbrite = functions
 
     // many more page
     functions.logger.info('starting upload');
-    functions.logger.info(collectiveEventsArray);
 
     collectiveEventsArray.forEach((currPageEvents) => {
       functions.logger.info('adding in progress');
@@ -129,6 +128,18 @@ exports.scrapeEventbrite = functions
       });
       functions.logger.info('Uploaded to firestore');
     });
+
+    const today = new Date();
+    (async () => {
+      await admin
+        .firestore()
+        .collection('events')
+        .doc('scraped-events')
+        .collection('timestamp')
+        .add({ location: city, timestamp: today })
+        .catch((err) => functions.logger.info(err));
+    })();
+
     res.send(collectiveEventsArray);
-   functions.logger.info('Scraping Successful');
+    functions.logger.info('Scraping Successful');
   });
