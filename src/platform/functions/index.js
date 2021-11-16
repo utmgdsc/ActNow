@@ -155,15 +155,15 @@ exports.deleteOutdatedUserEvents = functions
     checkTime.setHours(checkTime.getHours() + 2)
     const cityCollections = await admin.firestore().collection("events").doc("custom").listCollections()
 
-    cityCollections.forEach(cityColection => {
+    for (const cityColection of cityCollections) {
       const allEvents = await cityColection.get()
-      for (let event in allEvents) { // for event in allEvents
+      for (const event in allEvents) { // for event in allEvents
         const eventTime = new Date(event.dateTime)
         if (eventTime < checkTime) { // if event.dateTime is less than checkTime (if event )
           event.delete() // remove event from collection
         }
       }
-    })
+    }
 
 
     // const query = itemsRef.whereLessThan("dateTime", today);
