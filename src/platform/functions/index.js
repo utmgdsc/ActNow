@@ -6,7 +6,7 @@ admin.initializeApp();
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-exports.scrapeEventbrite = functions
+exports.scrapeEventGiveCity = functions
   .runWith({
     timeoutSeconds: 60,
     memory: '1GB',
@@ -143,3 +143,51 @@ exports.scrapeEventbrite = functions
     res.send(collectiveEventsArray);
     functions.logger.info('Scraping Successful');
   });
+
+exports.deleteOutdatedUserEvents = functions
+  .runWith({
+    timeoutSeconds: 60,
+    memory: '1GB',
+  })
+  .https.onRequest(async (req, res) => {
+    functions.logger.info('Deleting outdated events...');
+    const checkTime = new Date();
+    checkTime.setHours(checkTime.getHours() + 2)
+    const cityCollections = await admin.firestore().collection("events").doc("custom").listCollections()
+
+    cityCollections.forEach(cityColection => {
+      const allEvents = await cityColection.get()
+      for (let event in allEvents) { // for event in allEvents
+        const eventTime = new Date(event.dateTime)
+        if (eventTime < checkTime) { // if event.dateTime is less than checkTime (if event )
+          event.delete() // remove event from collection
+        }
+      }
+    })
+
+
+    // const query = itemsRef.whereLessThan("dateTime", today);
+
+    // // many more page
+    // functions.logger.info('starting upload');
+
+    // collectiveEventsArray.forEach((currPageEvents) => {
+    //     functions.logger.info('adding in progress');
+    //     currPageEvents.forEach((event) => {
+    //         (async () => {
+    //             await admin
+    //                 .firestore()
+    //                 .collection('events')
+    //                 .doc('scraped-events')
+    //                 .collection(city)
+    //                 .add(event)
+    //                 .catch((err) => functions.logger.info(err));
+    //         })();
+    //     });
+    //     functions.logger.info('Uploaded to firestore');
+    // });
+
+    // res.send(collectiveEventsArray);
+    functions.logger.info('Deleting Successful');
+  });
+
