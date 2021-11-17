@@ -147,47 +147,50 @@ exports.scrapeEventGiveCity = functions
 exports.deleteOutdatedUserEvents = functions
   .runWith({
     timeoutSeconds: 60,
-    memory: '1GB',
+    memory: '256MB',
   })
-  .https.onRequest(async (req, res) => {
+  .https.onRequest(async (_, res) => {
     functions.logger.info('Deleting outdated events...');
-    const checkTime = new Date();
-    checkTime.setHours(checkTime.getHours() + 2)
-    const cityCollections = await admin.firestore().collection("events").doc("custom").listCollections()
+    const currTime = new Date();
+    const deletedEvents = {};
+    currTime.setHours(currTime.getHours() + 2);
 
-    for (const cityColection of cityCollections) {
-      const allEvents = await cityColection.get()
-      for (const event in allEvents) { // for event in allEvents
-        const eventTime = new Date(event.dateTime)
-        if (eventTime < checkTime) { // if event.dateTime is less than checkTime (if event )
-          event.delete() // remove event from collection
-        }
+    const cityCollections = await admin
+      .firestore()
+      .collection('events')
+      .doc('custom')
+      .listCollections();
+
+    try {
+      if (cityCollections) {
+        const cityCollectionsDataPromises = [];
+        const eventToDeletePromises = [];
+
+        cityCollections.forEach((cityCollection) =>
+          cityCollectionsDataPromises.push(cityCollection.get()),
+        );
+
+        const cityCollectionsData = await Promise.all(cityCollectionsDataPromises);
+
+        cityCollectionsData.forEach((allEvents) => {
+          allEvents.docs.forEach((event) => {
+            const eventTime = new Date(event.data().dateTime);
+            if (eventTime < currTime) {
+              if (!(event.ref.parent.id in deletedEvents)) {
+                deletedEvents[event.ref.parent.id] = {};
+              }
+              deletedEvents[event.ref.parent.id][event.id] = event.data();
+              eventToDeletePromises.push(event.ref.delete());
+            }
+          });
+        });
+
+        await Promise.all(eventToDeletePromises);
       }
+    } catch (error) {
+      functions.logger.error(error);
     }
 
-
-    // const query = itemsRef.whereLessThan("dateTime", today);
-
-    // // many more page
-    // functions.logger.info('starting upload');
-
-    // collectiveEventsArray.forEach((currPageEvents) => {
-    //     functions.logger.info('adding in progress');
-    //     currPageEvents.forEach((event) => {
-    //         (async () => {
-    //             await admin
-    //                 .firestore()
-    //                 .collection('events')
-    //                 .doc('scraped-events')
-    //                 .collection(city)
-    //                 .add(event)
-    //                 .catch((err) => functions.logger.info(err));
-    //         })();
-    //     });
-    //     functions.logger.info('Uploaded to firestore');
-    // });
-
-    // res.send(collectiveEventsArray);
-    functions.logger.info('Deleting Successful');
+    functions.logger.info('Deleting Successful', deletedEvents);
+    res.send(deletedEvents);
   });
-
