@@ -138,7 +138,7 @@ class ExplorePageState extends State<ExplorePage> {
     List<LocalEventDetails> eventsList = <LocalEventDetails>[];
     await events.get().then((value) => {
           value.docs.forEach((element) async {
-            bool s = saved_list.contains(element.id);
+            bool is_saved = saved_list.contains(element.id);
             eventsList.add(LocalEventDetails(
                 title: element['title'],
                 num_attendees: element['numAttendees'],
@@ -147,7 +147,7 @@ class ExplorePageState extends State<ExplorePage> {
                 creator: element['createdByName'],
                 id: element.id,
                 ref: events,
-                saved: s));
+                saved: is_saved));
           })
         });
 
