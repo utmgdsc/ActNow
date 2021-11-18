@@ -6,7 +6,11 @@ admin.initializeApp();
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+<<<<<<< HEAD
 exports.scrapeEventGiveCity = functions
+=======
+exports.scrapeEventGivenCity = functions
+>>>>>>> master
   .runWith({
     timeoutSeconds: 60,
     memory: '1GB',
@@ -147,6 +151,7 @@ exports.scrapeEventGiveCity = functions
 exports.deleteOutdatedUserEvents = functions
   .runWith({
     timeoutSeconds: 60,
+<<<<<<< HEAD
     memory: '1GB',
   })
   .https.onRequest(async (req, res) => {
@@ -191,3 +196,52 @@ exports.deleteOutdatedUserEvents = functions
     functions.logger.info('Deleting Successful');
   });
 
+=======
+    memory: '256MB',
+  })
+  .https.onRequest(async (_, res) => {
+    functions.logger.info('Deleting outdated events...');
+    const currTime = new Date();
+    const deletedEvents = {};
+    currTime.setHours(currTime.getHours() + 2);
+
+    const cityCollections = await admin
+      .firestore()
+      .collection('events')
+      .doc('custom')
+      .listCollections();
+
+    try {
+      if (cityCollections) {
+        const cityCollectionsDataPromises = [];
+        const eventToDeletePromises = [];
+
+        cityCollections.forEach((cityCollection) =>
+          cityCollectionsDataPromises.push(cityCollection.get()),
+        );
+
+        const cityCollectionsData = await Promise.all(cityCollectionsDataPromises);
+
+        cityCollectionsData.forEach((allEvents) => {
+          allEvents.docs.forEach((event) => {
+            const eventTime = new Date(event.data().dateTime);
+            if (eventTime < currTime) {
+              if (!(event.ref.parent.id in deletedEvents)) {
+                deletedEvents[event.ref.parent.id] = {};
+              }
+              deletedEvents[event.ref.parent.id][event.id] = event.data();
+              eventToDeletePromises.push(event.ref.delete());
+            }
+          });
+        });
+
+        await Promise.all(eventToDeletePromises);
+      }
+    } catch (error) {
+      functions.logger.error(error);
+    }
+
+    functions.logger.info('Deleting Successful', deletedEvents);
+    res.send(deletedEvents);
+  });
+>>>>>>> master
