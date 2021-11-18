@@ -21,8 +21,6 @@ class EventWidget extends StatelessWidget {
       this.img_location,
       this.saved});
 
-  bool _isBluetoothOn = false;
-
   @override
   Widget build(BuildContext context) {
     return Container(
