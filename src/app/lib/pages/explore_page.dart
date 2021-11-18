@@ -51,19 +51,17 @@ class ExplorePageState extends State<ExplorePage> {
   late Map<String, dynamic>? userInfo;
   var saved_list;
 
-  void updateInfo() {
+  Future<void> updateInfo() async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    firestore
+    await firestore
         .collection('users')
         .doc(widget.userCreds!.uid)
         .get()
-        .then((value) => {
-              setState(() {
-                userInfo = value.data();
-                //userInfo!["email"] = widget.userCreds!.email;
-                saved_list = value.data()!["saved_events"];
-              })
-            });
+        .then((value) {
+      userInfo = value.data();
+      userInfo!["email"] = widget.userCreds!.email;
+      saved_list = value.data()!["saved_events"];
+    });
   }
 
   Future<void> _getCurrentLocation() async {
@@ -135,20 +133,12 @@ class ExplorePageState extends State<ExplorePage> {
     CollectionReference<Map<String, dynamic>> events =
         firestore.collection('events').doc("custom").collection(city);
 
-    updateInfo();
-
-    print(saved_list);
-    //print(saved_list.runtimeType);
-
-    saved_list.forEach((element) {
-      print(element);
-    });
+    await updateInfo();
 
     List<LocalEventDetails> eventsList = <LocalEventDetails>[];
     await events.get().then((value) => {
           value.docs.forEach((element) async {
-            bool s = await isElementSaved(element.id);
-            print(s);
+            bool s = saved_list.contains(element.id);
             eventsList.add(LocalEventDetails(
                 title: element['title'],
                 num_attendees: element['numAttendees'],
@@ -192,7 +182,8 @@ class ExplorePageState extends State<ExplorePage> {
                     future: getEventData(),
                     builder: (context, AsyncSnapshot<List> snapshot) {
                       return ListView.builder(
-                          itemCount: snapshot.data!.length,
+                          itemCount:
+                              snapshot.data != null ? snapshot.data!.length : 0,
                           itemBuilder: (context, index) {
                             return GestureDetector(
                               onTap: () {
@@ -205,7 +196,9 @@ class ExplorePageState extends State<ExplorePage> {
                                 Navigator.push(context, route)
                                     .then((value) => setState(() {}));
                               },
-                              onDoubleTap: () {},
+                              onDoubleTap: () {
+                                updated_saved_item(snapshot.data![index].id);
+                              },
                               child: EventWidget(
                                   title: snapshot.data![index].title,
                                   creator: snapshot.data![index].creator,
@@ -224,15 +217,18 @@ class ExplorePageState extends State<ExplorePage> {
             )));
   }
 
-  Future<bool> isElementSaved(String id) async {
-    print(id);
-    await saved_list.forEach((element) {
-      //print(id == element);
-      if (element.toString() == id) {
-        return true;
-      }
-    });
+  void updated_saved_item(String event_id) {
+    if (saved_list.contains(event_id)) {
+      saved_list.remove(event_id);
+    } else {
+      saved_list.add(event_id);
+    }
 
-    return false;
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userCreds!.uid)
+        .update({'saved_events': saved_list});
+
+    _getCurrentLocation();
   }
 }
