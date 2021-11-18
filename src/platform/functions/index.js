@@ -6,7 +6,7 @@ admin.initializeApp();
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-exports.scrapeEventGiveCity = functions
+exports.scrapeEventGivenCity = functions
   .runWith({
     timeoutSeconds: 60,
     memory: '1GB',
