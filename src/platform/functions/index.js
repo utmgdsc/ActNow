@@ -80,8 +80,8 @@ exports.scrapeEventGivenCity = functions
           let numAttendees = 0;
           if (followers?.innerText) {
             numAttendees = followers.innerText.includes('k')
-              ? parseInt(parseFloat(followers.innerText) * 1000)
-              : parseInt(followers.innerText);
+              ? parseInt(parseFloat(followers.innerText) * 1000, 10)
+              : parseInt(followers.innerText, 10);
           }
 
           const newEvent = {
@@ -94,8 +94,8 @@ exports.scrapeEventGivenCity = functions
             imageUrl: imgUrl ? imgUrl.getAttribute('src') : '',
             description: eventUrl
               ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
-                  'href',
-                )}`
+                'href',
+              )}`
               : ticketInfo,
           };
 
