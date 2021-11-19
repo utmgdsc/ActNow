@@ -42,9 +42,7 @@ exports.scrapeEventGivenCity = functions
 
       eventsArray = await page.evaluate(async () => {
         const events = [];
-        // for (let x = 1; x <= 3; x += 1) {
         for (let i = 1; i <= 60; i += 1) {
-          // console.log(i);
           const eventTitle = document.querySelector(
             `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > a > h3 > div > div.eds-event-card__formatted-name--is-clamped.eds-event-card__formatted-name--is-clamped-three.eds-text-weight--heavy`,
           );
@@ -69,25 +67,36 @@ exports.scrapeEventGivenCity = functions
           );
 
           const followers = document.querySelector(
-            `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__sub-content > div:nth-child(3) > div > div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy`
-          )
+            `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__sub-content > div:nth-child(3) > div > div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy`,
+          );
 
-          let ticketInfo = cost ? cost.innerText : ''
+          let ticketInfo = cost ? cost.innerText : '';
           if (ticketInfo.substring(0, 4) === 'Free' || ticketInfo.substring(0, 9) === 'Starts at') {
-            ticketInfo = `Registration Cost: ${ticketInfo}. `
+            ticketInfo = `Registration Cost: ${ticketInfo}. `;
           } else {
-            ticketInfo = ''
+            ticketInfo = '';
+          }
+
+          let numAttendees = 0;
+          if (followers?.innerText) {
+            numAttendees = followers.innerText.includes('k')
+              ? parseInt(parseFloat(followers.innerText) * 1000)
+              : parseInt(followers.innerText);
           }
 
           const newEvent = {
             attendees: [],
-            numAttendees: followers && followers.innerText != undefined ? followers.innerText.includes('k') ? parseInt(parseFloat(followers.innerText) * 1000) : parseInt(followers.innerText) : 0,
+            numAttendees,
             title: eventTitle ? eventTitle.innerText : '',
             dateTime: eventDate ? eventDate.innerText : '',
             location: eventLoc ? eventLoc.innerText : '',
             createdByName: organizedBy ? organizedBy.innerText : '',
             imageUrl: imgUrl ? imgUrl.getAttribute('src') : '',
-            description: eventUrl ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute('href')}` : ticketInfo,
+            description: eventUrl
+              ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
+                  'href',
+                )}`
+              : ticketInfo,
           };
 
           if (!(newEvent.title === '')) {
