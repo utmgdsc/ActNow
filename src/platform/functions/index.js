@@ -19,7 +19,7 @@ exports.scrapeEventGivenCity = functions
     let city = '';
     if (req.method === 'GET') {
       if (req.query.city && req.query.city.length !== 0) {
-        city = req.query.city;
+        city = req.query.city[0].toUpperCase() + req.query.city.slice(1);
         functions.logger.info('City: ' + city);
       } else {
         return functions.logger.error('No city name provided');
@@ -68,13 +68,15 @@ exports.scrapeEventGivenCity = functions
           );
 
           const newEvent = {
+            attendees: [],
+            numAttendees: 0,
             title: eventTitle ? eventTitle.innerText : '',
-            date: eventDate ? eventDate.innerText : '',
+            dateTime: eventDate ? eventDate.innerText : '',
             location: eventLoc ? eventLoc.innerText : '',
             ticket: cost ? cost.innerText : '',
-            organization: organizedBy ? organizedBy.innerText : '',
-            img: imgUrl ? imgUrl.getAttribute('src') : '',
-            url: eventUrl ? eventUrl.getAttribute('href') : '',
+            createdByName: organizedBy ? organizedBy.innerText : '',
+            imageUrl: imgUrl ? imgUrl.getAttribute('src') : '',
+            description: eventUrl ? eventUrl.getAttribute('href') : '',
           };
 
           if (
