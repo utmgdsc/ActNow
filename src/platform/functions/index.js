@@ -63,30 +63,32 @@ exports.scrapeEventGivenCity = functions
           const imgUrl = document.querySelector(
             `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.image-action-container > aside > a > div > div > img`,
           );
+
           const eventUrl = document.querySelector(
             `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > a`,
           );
 
+          const followers = document.querySelector(
+            `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__sub-content > div:nth-child(3) > div > div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy`
+          )
+
+          let ticketInfo = cost ? cost.innerText : ''
+          if (ticketInfo.substring(0, 4) === 'Free' || ticketInfo.substring(0, 9) === 'Starts at') {
+            ticketInfo = `Registration Cost: ${ticketInfo}. `
+          } else {
+            ticketInfo = ''
+          }
+
           const newEvent = {
             attendees: [],
-            numAttendees: 0,
+            numAttendees: followers && followers.innerText != undefined ? followers.innerText.includes('k') ? parseInt(parseFloat(followers.innerText) * 1000) : parseInt(followers.innerText) : 0,
             title: eventTitle ? eventTitle.innerText : '',
             dateTime: eventDate ? eventDate.innerText : '',
             location: eventLoc ? eventLoc.innerText : '',
-            ticket: cost ? cost.innerText : '',
             createdByName: organizedBy ? organizedBy.innerText : '',
             imageUrl: imgUrl ? imgUrl.getAttribute('src') : '',
-            description: eventUrl ? eventUrl.getAttribute('href') : '',
+            description: eventUrl ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute('href')}` : ticketInfo,
           };
-
-          if (
-            !(
-              newEvent.ticket.substring(0, 4) === 'Free' ||
-              newEvent.ticket.substring(0, 9) === 'Starts at'
-            )
-          ) {
-            newEvent.ticket = '';
-          }
 
           if (!(newEvent.title === '')) {
             events.push(newEvent);
