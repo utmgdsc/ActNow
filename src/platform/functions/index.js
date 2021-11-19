@@ -78,7 +78,7 @@ exports.scrapeEventGivenCity = functions
           }
 
           let numAttendees = 0;
-          if (followers?.innerText) {
+          if (followers && followers.innerText) {
             numAttendees = followers.innerText.includes('k')
               ? parseInt(parseFloat(followers.innerText) * 1000, 10)
               : parseInt(followers.innerText, 10);
