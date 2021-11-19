@@ -40,8 +40,10 @@ class EventDetailsState extends State<EventDetails> {
   }
 
   void checkUserCreated() {
-    if (userInfo!["createdBy"] == widget.userCreds!.uid.toString()) {
-      userCreated = true;
+    if (userInfo!.containsKey("createdBy")) {
+      if (userInfo!["createdBy"] == widget.userCreds!.uid.toString()) {
+        userCreated = true;
+      }
     }
   }
 
@@ -164,7 +166,11 @@ class EventDetailsState extends State<EventDetails> {
     var splitLocation = userInfo!["location"].toString().split(",");
     String formatMainLocation;
     String formatSubLocation;
-    if (splitLocation.length < 4) {
+    if(splitLocation.length <= 2) {
+      formatMainLocation = userInfo!["createdByName"];
+      formatSubLocation = userInfo!["location"].toString().split("•")[1];
+    }
+    else if (splitLocation.length < 4) {
       formatMainLocation = splitLocation[0];
       formatSubLocation = splitLocation[0].split(" ")[1] +
           ", " +

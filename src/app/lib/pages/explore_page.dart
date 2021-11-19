@@ -90,6 +90,9 @@ class ExplorePageState extends State<ExplorePage> {
     CollectionReference<Map<String, dynamic>> events =
         firestore.collection('events').doc("custom").collection(city);
 
+    CollectionReference<Map<String, dynamic>> scrapedEvents =
+        firestore.collection('events').doc("scraped-events").collection(city);
+
     List<LocalEventDetails> eventsList = <LocalEventDetails>[];
     await events.get().then((value) => {
           value.docs.forEach((element) {
@@ -101,6 +104,19 @@ class ExplorePageState extends State<ExplorePage> {
                 creator: element['createdByName'],
                 id: element.id,
                 ref: events));
+          })
+        });
+
+    await scrapedEvents.get().then((value) => {
+          value.docs.forEach((element) {
+            eventsList.add(LocalEventDetails(
+                title: element['title'],
+                num_attendees: element['numAttendees'],
+                img_location: element['imageUrl'],
+                date_time: element['dateTime'],
+                creator: element['createdByName'],
+                id: element.id,
+                ref: scrapedEvents));
           })
         });
 
