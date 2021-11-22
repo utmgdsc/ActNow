@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:actnow/pages/event_details.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -173,10 +174,10 @@ class MapPageState extends State<MapPage> {
     var scrapedEvents = await scrapedRef.get();
 
     for (var element in scrapedEvents.docs) {
-      var result = await googleGeocoding.geocoding.get(element["location"], []);
-      if (!(result!.results!.isEmpty)) {
-        var pos = LatLng(result.results![0].geometry!.location!.lat!,
-            result.results![0].geometry!.location!.lng!);
+      var result = await geocoding.locationFromAddress(element["location"]);
+      if (!(result.isEmpty)) {
+        var pos = LatLng(result[0].latitude,
+            result[0].longitude);
         var markerToAdd = Marker(
             markerId: MarkerId(pos.toString()),
             onTap: () {

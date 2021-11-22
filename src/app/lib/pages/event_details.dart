@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_geocoding/google_geocoding.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'map_page/add_event.dart';
 
@@ -155,8 +157,11 @@ class EventDetailsState extends State<EventDetails> {
     String formattedDate;
     String formattedTime;
     if (commaSplit.length > 2) {
-      formattedDate =
-          commaSplit[0] + " " + commaSplit[1] + " " + DateTime.now().year.toString();
+      formattedDate = commaSplit[0] +
+          " " +
+          commaSplit[1] +
+          " " +
+          DateTime.now().year.toString();
       formattedTime = commaSplit[2].split("+")[0];
     } else {
       formattedDate = spaceSplit[0] +
@@ -298,11 +303,30 @@ class EventDetailsState extends State<EventDetails> {
                             height: 100,
                             child: Align(
                                 alignment: Alignment.topLeft,
-                                child: Text(userInfo!["description"].toString(),
-                                    textAlign: TextAlign.left,
-                                    style: const TextStyle(
-                                      fontSize: 16.0,
-                                    )))),
+                                child: userInfo!["description"]
+                                            .toString()
+                                            .split(":")
+                                            .length >
+                                        1
+                                    ? Linkify(
+                                        onOpen: (link) async {
+                                          if (await canLaunch(link.url)) {
+                                            await launch(link.url);
+                                          } else {
+                                            throw 'Could not launch $link';
+                                          }
+                                        },
+                                        text: userInfo!["description"],
+                                        textAlign: TextAlign.left,
+                                        style: const TextStyle(
+                                          fontSize: 16.0,
+                                        ),
+                                      )
+                                    : Text(userInfo!["description"].toString(),
+                                        textAlign: TextAlign.left,
+                                        style: const TextStyle(
+                                          fontSize: 16.0,
+                                        )))),
                       ])),
                   const SizedBox(height: 20.0),
                   userCreated

@@ -42,9 +42,12 @@ dependencies:
   google_maps_flutter: ^2.0.11
   location: ^4.2.0
   flutter_dotenv: ^5.0.2
+  geocoding: ^2.0.1
   google_geocoding: ^0.2.0
   image_picker: ^0.8.4+3
   firebase_storage: ^10.0.6
+  url_launcher: ^6.0.15
+  flutter_linkify: ^5.0.2
   uuid: ^3.0.5
 
 dev_dependencies:
