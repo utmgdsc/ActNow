@@ -149,15 +149,25 @@ class EventDetailsState extends State<EventDetails> {
   }
 
   Map<String, String> formatDate() {
-    var splitDate = userInfo!["dateTime"].toString().split(" ");
-    var formattedDate = splitDate[0] +
-        " " +
-        splitDate[2] +
-        " " +
-        splitDate[1] +
-        " " +
-        splitDate[3];
-    var formattedTime = splitDate[4] + " " + splitDate[5];
+    var splitDate = userInfo!["dateTime"].toString();
+    var commaSplit = splitDate.split(",");
+    var spaceSplit = splitDate.split(" ");
+    String formattedDate;
+    String formattedTime;
+    if (commaSplit.length > 2) {
+      formattedDate =
+          commaSplit[0] + " " + commaSplit[1] + " " + DateTime.now().year.toString();
+      formattedTime = commaSplit[2].split("+")[0];
+    } else {
+      formattedDate = spaceSplit[0] +
+          " " +
+          spaceSplit[2] +
+          " " +
+          spaceSplit[1] +
+          " " +
+          spaceSplit[3];
+      formattedTime = spaceSplit[4] + " " + spaceSplit[5];
+    }
 
     return {"Date": formattedDate, "Time": formattedTime};
   }
@@ -166,11 +176,10 @@ class EventDetailsState extends State<EventDetails> {
     var splitLocation = userInfo!["location"].toString().split(",");
     String formatMainLocation;
     String formatSubLocation;
-    if(splitLocation.length <= 2) {
+    if (splitLocation.length <= 2) {
       formatMainLocation = userInfo!["createdByName"];
       formatSubLocation = userInfo!["location"].toString().split("•")[1];
-    }
-    else if (splitLocation.length < 4) {
+    } else if (splitLocation.length < 4) {
       formatMainLocation = splitLocation[0];
       formatSubLocation = splitLocation[0].split(" ")[1] +
           ", " +

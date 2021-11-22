@@ -174,21 +174,23 @@ class MapPageState extends State<MapPage> {
 
     for (var element in scrapedEvents.docs) {
       var result = await googleGeocoding.geocoding.get(element["location"], []);
-      var pos = LatLng(result!.results![0].geometry!.location!.lat!,
-          result.results![0].geometry!.location!.lng!);
-      var markerToAdd = Marker(
-          markerId: MarkerId(pos.toString()),
-          onTap: () {
-            Route route = MaterialPageRoute(
-                builder: (context) => EventDetails(
-                    userCreds: widget.userCreds,
-                    collectionRef: scrapedRef,
-                    eventUid: element.id));
-            Navigator.push(context, route);
-          },
-          position: pos);
+      if (!(result!.results!.isEmpty)) {
+        var pos = LatLng(result.results![0].geometry!.location!.lat!,
+            result.results![0].geometry!.location!.lng!);
+        var markerToAdd = Marker(
+            markerId: MarkerId(pos.toString()),
+            onTap: () {
+              Route route = MaterialPageRoute(
+                  builder: (context) => EventDetails(
+                      userCreds: widget.userCreds,
+                      collectionRef: scrapedRef,
+                      eventUid: element.id));
+              Navigator.push(context, route);
+            },
+            position: pos);
 
-      _markers.add(markerToAdd);
+        _markers.add(markerToAdd);
+      }
     }
     setState(() {
       allScrapedEventsRead = true;
