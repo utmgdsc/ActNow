@@ -151,8 +151,6 @@ class MapPageState extends State<MapPage> {
         google_geocoding.LatLon(
             currentLocation!.latitude!, currentLocation.longitude!));
 
-    //var risult = await googleGeocoding.geocoding.get("Toronto Congress Centre  Toronto, ON",[]);
-
     List<String> splitAddress =
         result!.results![0].formattedAddress!.split(',');
 
