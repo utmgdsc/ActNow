@@ -99,13 +99,12 @@ class EventWidget extends StatelessWidget {
                           style: const TextStyle(
                               fontSize: 14.0, color: Colors.black),
                         )),
-                        Expanded(
-                            child: Text(
+                        Text(
                           "+ " + num_attendees.toString() + " attendees",
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               fontSize: 14.0, color: Colors.black),
-                        ))
+                        )
                       ]),
                 ],
               ))

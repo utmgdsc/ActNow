@@ -182,7 +182,7 @@ class EventDetailsState extends State<EventDetails> {
     String formatMainLocation;
     String formatSubLocation;
     if (splitLocation.length <= 2) {
-      formatMainLocation = userInfo!["createdByName"];
+      formatMainLocation = userInfo!["location"].toString().split("•")[0];
       formatSubLocation = userInfo!["location"].toString().split("•")[1];
     } else if (splitLocation.length < 4) {
       formatMainLocation = splitLocation[0];
