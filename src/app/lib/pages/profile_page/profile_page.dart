@@ -2,14 +2,19 @@ import 'package:actnow/pages/profile_page/contact_us.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:location/location.dart';
 
 import 'personal_info.dart';
 
 class ProfilePage extends StatefulWidget {
   final User? userCreds;
   final Function(User?) onSignOut;
+  final Function(bool) onUpdateProfile;
   const ProfilePage(
-      {Key? key, required this.userCreds, required this.onSignOut})
+      {Key? key,
+      required this.userCreds,
+      required this.onSignOut,
+      required this.onUpdateProfile})
       : super(key: key);
 
   Future<void> signOut() async {
@@ -26,23 +31,104 @@ class ProfilePageState extends State<ProfilePage> {
   String? lastName;
   String? profileURL;
   late Map<String, dynamic>? userInfo;
-  bool isSwitched = false;
+  bool? isSwitched;
+  CollectionReference users = FirebaseFirestore.instance.collection('users');
+
+  showBox(String? message, String? title) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title!),
+            content: Text(message!),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      updateSwitch();
+                      isSwitched = !isSwitched!;
+                    });
+                  },
+                  child: const Text('Cancel')),
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    addLocation();
+                  },
+                  child: const Text('OK'))
+            ],
+          );
+        });
+  }
+
+  Future<LocationData?> _getCurrentLocation() async {
+    var rawLocation = Location();
+    var serviceEnabled = await rawLocation.serviceEnabled();
+
+    if (!serviceEnabled) {
+      serviceEnabled = await rawLocation.requestService();
+      if (!serviceEnabled) {
+        return null;
+      }
+    }
+
+    var permissionGranted = await rawLocation.hasPermission();
+
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await rawLocation.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
+        return null;
+      }
+    }
+
+    try {
+      var newLocation = await rawLocation.getLocation();
+      return newLocation;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  void addLocation() {
+    DocumentReference ref = users.doc(widget.userCreds!.uid);
+    _getCurrentLocation().then((value) => {
+          if (value != null)
+            {
+              ref.update({'longitude': value.longitude}),
+              ref.update({'latitude': value.latitude}),
+            }
+          else
+            {
+              setState(() {
+                updateSwitch();
+                isSwitched = !isSwitched!;
+              })
+            }
+        });
+  }
 
   void updateInfo() {
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    firestore
-        .collection('users')
-        .doc(widget.userCreds!.uid)
-        .get()
-        .then((value) => {
-              setState(() {
-                userInfo = value.data();
-                userInfo!["email"] = widget.userCreds!.email;
-                lastName = value.data()!["lastname"];
-                firstName = value.data()!["firstname"];
-                profileURL = value.data()!["profile_picture"];
-              })
-            });
+    users.doc(widget.userCreds!.uid).get().then((value) => {
+          setState(() {
+            userInfo = value.data() as Map<String, dynamic>?;
+            userInfo!["email"] = widget.userCreds!.email;
+            lastName = userInfo!["lastname"];
+            firstName = userInfo!["firstname"];
+            profileURL = userInfo!["profile_picture"];
+            isSwitched = userInfo!["isSwitched"];
+          })
+        });
+  }
+
+  void updateSwitch() {
+    DocumentReference ref = users.doc(widget.userCreds!.uid);
+    if (isSwitched!) {
+      ref.update({'isSwitched': false});
+    } else {
+      ref.update({'isSwitched': true});
+    }
+    widget.onUpdateProfile(!isSwitched!);
   }
 
   @override
@@ -164,10 +250,16 @@ class ProfilePageState extends State<ProfilePage> {
                         Row(children: [
                           const Text("Public Account"),
                           Switch(
-                            value: isSwitched,
+                            value: isSwitched!,
                             onChanged: (value) {
                               setState(() {
+                                updateSwitch();
                                 isSwitched = value;
+                                if (isSwitched!) {
+                                  showBox(
+                                      "This will make your location public, are you sure?",
+                                      "WARNING");
+                                }
                               });
                             },
                             activeColor: Colors.blue,

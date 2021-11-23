@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:actnow/pages/event_widget.dart';
+import 'package:actnow/widgets/event_widget.dart';
+import 'package:actnow/widgets/search_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,7 @@ class LocalEventDetails {
   final String? date_time;
   final int? num_attendees;
   final String? id;
-  final CollectionReference? ref;
+  final CollectionReference<Map<String, dynamic>>? ref;
   final bool? saved;
 
   LocalEventDetails(
@@ -32,7 +33,10 @@ class LocalEventDetails {
 
 class ExplorePage extends StatefulWidget {
   final User? userCreds;
-  const ExplorePage({Key? key, required this.userCreds}) : super(key: key);
+  final dynamic userLocation;
+  const ExplorePage(
+      {Key? key, required this.userCreds, required this.userLocation})
+      : super(key: key);
 
   @override
   ExplorePageState createState() => ExplorePageState();
@@ -40,7 +44,11 @@ class ExplorePage extends StatefulWidget {
 
 class ExplorePageState extends State<ExplorePage> {
   var currentLocation;
+  String query = '';
   LatLng defaultLocation = const LatLng(43.55103829955488, -79.66262838104547);
+  late Future<List<LocalEventDetails>> _futureList;
+  List<LocalEventDetails>? exploreEvents = null;
+  List<LocalEventDetails>? unfilteredEvents = null;
 
   @override
   void initState() {
@@ -99,7 +107,14 @@ class ExplorePageState extends State<ExplorePage> {
       setState(() {
         currentLocation = defaultLocation;
       });
+
+      if (widget.userLocation == null) {
+        currentLocation = defaultLocation;
+      } else {
+        currentLocation = widget.userLocation;
+      }
     }
+    _futureList = getEventData();
   }
 
   Future<List<LocalEventDetails>> getEventData() async {
@@ -151,6 +166,10 @@ class ExplorePageState extends State<ExplorePage> {
           })
         });
 
+    setState(() {
+      exploreEvents = eventsList;
+      unfilteredEvents = eventsList;
+    });
     return eventsList;
   }
 
@@ -159,7 +178,7 @@ class ExplorePageState extends State<ExplorePage> {
     double widthVariable = MediaQuery.of(context).size.width;
     double heightVariable = MediaQuery.of(context).size.height;
 
-    if (currentLocation == null) {
+    if (currentLocation == null || exploreEvents == null) {
       return Scaffold(
           body: SizedBox(
         height: heightVariable,
@@ -170,20 +189,42 @@ class ExplorePageState extends State<ExplorePage> {
       ));
     }
 
+    void searchEvent(String query) {
+      final filterEvents = unfilteredEvents!.where((element) {
+        final eventTitle = element.title!.toLowerCase();
+        final searchLower = query.toLowerCase();
+
+        return eventTitle.contains(searchLower);
+      }).toList();
+
+      setState(() {
+        exploreEvents = filterEvents;
+        this.query = query;
+      });
+    }
+
+    Widget buildSearch() => SearchWidget(
+          text: query,
+          hintText: 'Search events',
+          onChanged: searchEvent,
+        );
+
     return Scaffold(
         body: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Column(
               children: [
+                buildSearch(),
                 Expanded(
                   child: FutureBuilder(
                     initialData: [],
-                    future: getEventData(),
+                    future: _futureList,
                     builder: (context, AsyncSnapshot<List> snapshot) {
                       return ListView.builder(
                           itemCount:
                               snapshot.data != null ? snapshot.data!.length : 0,
+                          padding: EdgeInsets.zero,
                           itemBuilder: (context, index) {
                             return GestureDetector(
                               onTap: () {
@@ -191,10 +232,12 @@ class ExplorePageState extends State<ExplorePage> {
                                     builder: (context) => EventDetails(
                                         userCreds: widget.userCreds,
                                         collectionRef:
-                                            snapshot.data![index].ref,
-                                        eventUid: snapshot.data![index].id));
+                                            exploreEvents![index].ref!,
+                                        eventUid: exploreEvents![index].id!));
                                 Navigator.push(context, route)
-                                    .then((value) => setState(() {}));
+                                    .then((value) => setState(() {
+                                          getEventData();
+                                        }));
                               },
                               onDoubleTap: () {
                                 updated_saved_item(snapshot.data![index].id);
