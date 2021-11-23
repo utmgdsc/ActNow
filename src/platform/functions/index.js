@@ -6,6 +6,10 @@ admin.initializeApp();
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function capitalize(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+}
+
 exports.scrapeEventGivenCity = functions
   .runWith({
     timeoutSeconds: 60,
@@ -19,10 +23,11 @@ exports.scrapeEventGivenCity = functions
     let city = '';
     if (req.method === 'GET') {
       if (req.query.city && req.query.city.length !== 0) {
-        city = req.query.city;
+        city = capitalize(req.query.city);
         functions.logger.info('City: ' + city);
       } else {
-        return functions.logger.error('No city name provided');
+        functions.logger.error('No city name provided');
+        return res.status(400).send('No city name provided');
       }
     }
 
@@ -136,11 +141,12 @@ exports.scrapeEventGivenCity = functions
         .collection('events')
         .doc('scraped-events')
         .collection('timestamp')
-        .add({ location: city, timestamp: today })
+        .doc(city)
+        .set({ location: city, timestamp: today })
         .catch((err) => functions.logger.info(err));
     })();
 
-    res.send(collectiveEventsArray);
+    res.send(collectiveEventsArray.flat());
     functions.logger.info('Scraping Successful');
   });
 
