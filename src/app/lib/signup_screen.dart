@@ -43,6 +43,7 @@ class _SignupPageState extends State<SignupPage> {
           'firstname': _firstName.text,
           'lastname': _lastName.text,
           "isSwitched": false,
+          "saved_events": [],
         });
 
         if (userCreds.user != null && !userCreds.user!.emailVerified) {
