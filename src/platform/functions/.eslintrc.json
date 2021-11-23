@@ -11,6 +11,11 @@
   "rules": {
     "arrow-body-style": 0,
     "prefer-template": 0,
-    "operator-linebreak": 0
+    "operator-linebreak": 0,
+    "no-unused-vars": 1,
+    "implicit-arrow-linebreak": 0,
+    "function-paren-newline": 0,
+    "consistent-return": 0,
+    "newline-per-chained-call": 0
   }
 }
