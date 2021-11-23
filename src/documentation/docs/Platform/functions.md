@@ -44,3 +44,9 @@ sidebar_position: 2
 ```
 
 ### deleteOutdatedUserEvents
+
+**Method**: GET  
+**Required Query Parameter**: n/a
+**Permissions**: can only be invoked by application  
+**Example usage**: `https://us-central1-actnow-4b2f5.cloudfunctions.net/scrapeEventGivenCity?city=Toronto`  
+**Output Format**:
