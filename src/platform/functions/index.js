@@ -1,5 +1,4 @@
 const functions = require('firebase-functions');
-// const puppeteer = require('puppeteer');
 const admin = require('firebase-admin');
 const { Cluster } = require('puppeteer-cluster');
 
@@ -7,19 +6,25 @@ admin.initializeApp();
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-exports.scrapeEventbrite = functions
+exports.scrapeEventGivenCity = functions
   .runWith({
     timeoutSeconds: 60,
     memory: '1GB',
   })
-  .https.onRequest(async (_, res) => {
+  .https.onRequest(async (req, res) => {
     functions.logger.info('Starting to scrape...');
     let eventsArray = [];
     let collectiveEventsArray = [];
 
-    /** This is a bug with firestore. For some reason, if you try to write to a nested
-     * collection, it will not work, unless you write to the parent collection first. */
-    await admin.firestore().collection('events').doc('scraped-events').set({});
+    let city = '';
+    if (req.method === 'GET') {
+      if (req.query.city && req.query.city.length !== 0) {
+        city = req.query.city;
+        functions.logger.info('City: ' + city);
+      } else {
+        return functions.logger.error('No city name provided');
+      }
+    }
 
     const cluster = await Cluster.launch({
       concurrency: Cluster.CONCURRENCY_CONTEXT,
@@ -97,9 +102,9 @@ exports.scrapeEventbrite = functions
     });
 
     collectiveEventsArray = await Promise.all([
-      cluster.execute('https://www.eventbrite.ca/d/Toronto/all-events/?page=1'),
-      cluster.execute('https://www.eventbrite.ca/d/Toronto/all-events/?page=2'),
-      cluster.execute('https://www.eventbrite.ca/d/Toronto/all-events/?page=3'),
+      cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=1`),
+      cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=2`),
+      cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=3`),
     ]);
 
     await cluster.idle();
@@ -107,7 +112,6 @@ exports.scrapeEventbrite = functions
 
     // many more page
     functions.logger.info('starting upload');
-    functions.logger.info(collectiveEventsArray);
 
     collectiveEventsArray.forEach((currPageEvents) => {
       functions.logger.info('adding in progress');
@@ -117,12 +121,76 @@ exports.scrapeEventbrite = functions
             .firestore()
             .collection('events')
             .doc('scraped-events')
-            .collection('toronto')
+            .collection(city)
             .add(event)
             .catch((err) => functions.logger.info(err));
         })();
       });
       functions.logger.info('Uploaded to firestore');
     });
+
+    const today = new Date();
+    (async () => {
+      await admin
+        .firestore()
+        .collection('events')
+        .doc('scraped-events')
+        .collection('timestamp')
+        .add({ location: city, timestamp: today })
+        .catch((err) => functions.logger.info(err));
+    })();
+
     res.send(collectiveEventsArray);
+    functions.logger.info('Scraping Successful');
+  });
+
+exports.deleteOutdatedUserEvents = functions
+  .runWith({
+    timeoutSeconds: 60,
+    memory: '256MB',
+  })
+  .https.onRequest(async (_, res) => {
+    functions.logger.info('Deleting outdated events...');
+    const currTime = new Date();
+    const deletedEvents = {};
+    currTime.setHours(currTime.getHours() + 2);
+
+    const cityCollections = await admin
+      .firestore()
+      .collection('events')
+      .doc('custom')
+      .listCollections();
+
+    try {
+      if (cityCollections) {
+        const cityCollectionsDataPromises = [];
+        const eventToDeletePromises = [];
+
+        cityCollections.forEach((cityCollection) =>
+          cityCollectionsDataPromises.push(cityCollection.get()),
+        );
+
+        const cityCollectionsData = await Promise.all(cityCollectionsDataPromises);
+
+        cityCollectionsData.forEach((allEvents) => {
+          allEvents.docs.forEach((event) => {
+            const eventTime = new Date(event.data().dateTime);
+            if (eventTime < currTime) {
+              if (!(event.ref.parent.id in deletedEvents)) {
+                deletedEvents[event.ref.parent.id] = {};
+              }
+              deletedEvents[event.ref.parent.id][event.id] = event.data();
+              eventToDeletePromises.push(event.ref.delete());
+            }
+          });
+        });
+
+        await Promise.all(eventToDeletePromises);
+      }
+    } catch (error) {
+      functions.logger.error(error);
+    }
+
+    functions.logger.info('Deleting Successful', deletedEvents);
+    res.send(deletedEvents);
   });

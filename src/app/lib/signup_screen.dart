@@ -41,7 +41,8 @@ class _SignupPageState extends State<SignupPage> {
           'userid': userCreds.user!.uid,
           'username': _username.text,
           'firstname': _firstName.text,
-          'lastname': _lastName.text
+          'lastname': _lastName.text,
+          "isSwitched": false,
         });
 
         if (userCreds.user != null && !userCreds.user!.emailVerified) {
