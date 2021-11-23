@@ -1,2 +1,4 @@
 .DS_Store
 .env
+src/app/android/app/src/main/AndroidManifest.xml
+src/app/ios/Runner/AppDelegate.swift
