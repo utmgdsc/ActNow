@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:actnow/pages/event_details.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,7 @@ class MapPageState extends State<MapPage> {
   bool addedNewEvent = false;
   Map<String, String> formDetails = {};
   bool allEventsRead = false;
+  bool allScrapedEventsRead = false;
   bool allUsersRead = false;
   final List<Marker> _markers = [];
   final Completer<GoogleMapController> _controller = Completer();
@@ -41,7 +43,6 @@ class MapPageState extends State<MapPage> {
   @override
   void initState() {
     super.initState();
-    print(widget.userLocation);
     if (widget.userLocation == null) {
       currentLocation = defaultLocation;
     } else {
@@ -165,39 +166,66 @@ class MapPageState extends State<MapPage> {
     CollectionReference<Map<String, dynamic>> ref =
         firestore.collection('events').doc("custom").collection(city);
 
-    await ref.get().then((value) => {
-          value.docs.forEach((element) {
-            var pos = LatLng(element["latitude"], element["longitude"]);
-            var markerToAdd = Marker(
-                markerId: MarkerId(pos.toString()),
-                onTap: () {
-                  Route route = MaterialPageRoute(
-                      builder: (context) => EventDetails(
-                          userCreds: widget.userCreds,
-                          collectionRef: ref,
-                          eventUid: element.id));
-                  Navigator.push(context, route).then((value) => setState(() {
-                        if (value != null) {
-                          _markers.removeWhere((marker) =>
-                              marker.markerId.value ==
-                              LatLng(value.latitude, value.longitude)
-                                  .toString());
-                        }
-                      }));
-                },
-                position: pos,
-                draggable: true,
-                onDragEnd: (dragPos) {
-                  droppedIn = dragPos;
-                });
-            if (!_markers.contains(markerToAdd)) {
-              _markers.add(markerToAdd);
-            }
-          }),
-          setState(() {
-            allEventsRead = true;
-          })
-        });
+    CollectionReference<Map<String, dynamic>> scrapedRef =
+        firestore.collection('events').doc("scraped-events").collection(city);
+
+    var scrapedEvents = await scrapedRef.get();
+
+    for (var element in scrapedEvents.docs) {
+      var result = await geocoding.locationFromAddress(element["location"]);
+      if (!(result.isEmpty)) {
+        var pos = LatLng(result[0].latitude,
+            result[0].longitude);
+        var markerToAdd = Marker(
+            markerId: MarkerId(pos.toString()),
+            onTap: () {
+              Route route = MaterialPageRoute(
+                  builder: (context) => EventDetails(
+                      userCreds: widget.userCreds,
+                      collectionRef: scrapedRef,
+                      eventUid: element.id));
+              Navigator.push(context, route);
+            },
+            position: pos);
+
+        _markers.add(markerToAdd);
+      }
+    }
+    setState(() {
+      allScrapedEventsRead = true;
+    });
+
+    var events = await ref.get();
+    for (var element in events.docs) {
+      var pos = LatLng(element["latitude"], element["longitude"]);
+      var markerToAdd = Marker(
+          markerId: MarkerId(pos.toString()),
+          onTap: () {
+            Route route = MaterialPageRoute(
+                builder: (context) => EventDetails(
+                    userCreds: widget.userCreds,
+                    collectionRef: ref,
+                    eventUid: element.id));
+            Navigator.push(context, route).then((value) => setState(() {
+                  if (value != null) {
+                    _markers.removeWhere((marker) =>
+                        marker.markerId.value ==
+                        LatLng(value.latitude, value.longitude).toString());
+                  }
+                }));
+          },
+          position: pos,
+          draggable: true,
+          onDragEnd: (dragPos) {
+            droppedIn = dragPos;
+          });
+      if (!_markers.contains(markerToAdd)) {
+        _markers.add(markerToAdd);
+      }
+    }
+    setState(() {
+      allEventsRead = true;
+    });
   }
 
   void _moveToCurrentLocation() async {
@@ -246,7 +274,8 @@ class MapPageState extends State<MapPage> {
 
     if (allEventsRead == false ||
         allUsersRead == false ||
-        currentLocation == null) {
+        currentLocation == null ||
+        allScrapedEventsRead == false) {
       return Scaffold(
           body: SizedBox(
         height: heightVariable,

@@ -18,6 +18,7 @@ class LocalEventDetails {
   final int? num_attendees;
   final String? id;
   final CollectionReference<Map<String, dynamic>>? ref;
+  final bool? saved;
 
   LocalEventDetails(
       {this.title,
@@ -26,7 +27,8 @@ class LocalEventDetails {
       this.num_attendees,
       this.img_location,
       this.id,
-      this.ref});
+      this.ref,
+      this.saved});
 }
 
 class ExplorePage extends StatefulWidget {
@@ -57,6 +59,22 @@ class ExplorePageState extends State<ExplorePage> {
       currentLocation = widget.userLocation;
     }
     _futureList = getEventData();
+  }
+
+  late Map<String, dynamic>? userInfo;
+  var saved_list;
+
+  Future<void> updateInfo() async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    await firestore
+        .collection('users')
+        .doc(widget.userCreds!.uid)
+        .get()
+        .then((value) {
+      userInfo = value.data();
+      userInfo!["email"] = widget.userCreds!.email;
+      saved_list = value.data()!["saved_events"];
+    });
   }
 
   Future<List<LocalEventDetails>> getEventData() async {
@@ -90,9 +108,15 @@ class ExplorePageState extends State<ExplorePage> {
     CollectionReference<Map<String, dynamic>> events =
         firestore.collection('events').doc("custom").collection(city);
 
+    CollectionReference<Map<String, dynamic>> scrapedEvents =
+        firestore.collection('events').doc("scraped-events").collection(city);
+
+    await updateInfo();
+
     List<LocalEventDetails> eventsList = <LocalEventDetails>[];
     await events.get().then((value) => {
-          value.docs.forEach((element) {
+          value.docs.forEach((element) async {
+            bool is_saved = saved_list.contains(element.id);
             eventsList.add(LocalEventDetails(
                 title: element['title'],
                 num_attendees: element['numAttendees'],
@@ -100,7 +124,23 @@ class ExplorePageState extends State<ExplorePage> {
                 date_time: element['dateTime'],
                 creator: element['createdByName'],
                 id: element.id,
-                ref: events));
+                ref: events,
+                saved: is_saved));
+          })
+        });
+
+    await scrapedEvents.get().then((value) => {
+          value.docs.forEach((element) {
+            bool is_saved = saved_list.contains(element.id);
+            eventsList.add(LocalEventDetails(
+                title: element['title'],
+                num_attendees: element['numAttendees'],
+                img_location: element['imageUrl'],
+                date_time: element['dateTime'],
+                creator: element['createdByName'],
+                id: element.id,
+                ref: scrapedEvents,
+                saved: is_saved));
           })
         });
 
@@ -160,8 +200,9 @@ class ExplorePageState extends State<ExplorePage> {
                     future: _futureList,
                     builder: (context, AsyncSnapshot<List> snapshot) {
                       return ListView.builder(
+                          itemCount:
+                              exploreEvents != null ? exploreEvents!.length : 0,
                           padding: EdgeInsets.zero,
-                          itemCount: exploreEvents!.length,
                           itemBuilder: (context, index) {
                             return GestureDetector(
                               onTap: () {
@@ -176,6 +217,9 @@ class ExplorePageState extends State<ExplorePage> {
                                           getEventData();
                                         }));
                               },
+                              onDoubleTap: () {
+                                updated_saved_item(snapshot.data![index].id);
+                              },
                               child: EventWidget(
                                 title: exploreEvents![index].title,
                                 creator: exploreEvents![index].creator,
@@ -184,6 +228,7 @@ class ExplorePageState extends State<ExplorePage> {
                                     exploreEvents![index].num_attendees,
                                 img_location:
                                     exploreEvents![index].img_location,
+                                saved: exploreEvents![index].saved,
                               ),
                             );
                           });
@@ -192,5 +237,20 @@ class ExplorePageState extends State<ExplorePage> {
                 ),
               ],
             )));
+  }
+
+  void updated_saved_item(String event_id) {
+    if (saved_list.contains(event_id)) {
+      saved_list.remove(event_id);
+    } else {
+      saved_list.add(event_id);
+    }
+
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userCreds!.uid)
+        .update({'saved_events': saved_list});
+
+    getEventData();
   }
 }

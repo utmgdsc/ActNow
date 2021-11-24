@@ -142,8 +142,8 @@ const scrapeCityEvents = async (city) => {
 
 exports.scrapeEventGivenCity = functions
   .runWith({
-    timeoutSeconds: 60,
-    memory: '1GB',
+    timeoutSeconds: 120,
+    memory: '2GB',
   })
   .https.onRequest(async (req, res) => {
     functions.logger.info('Starting to scrape...');
@@ -161,7 +161,7 @@ exports.scrapeEventGivenCity = functions
 
     const collectiveEventsArray = await scrapeCityEvents(city);
 
-    res.send(collectiveEventsArray);
+    res.send(collectiveEventsArray.flat());
     functions.logger.info('Scraping Successful');
   });
 
