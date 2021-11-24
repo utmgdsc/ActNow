@@ -2,11 +2,12 @@
 sidebar_position: 2
 ---
 
-# Available Functions
+# API
 
 ### scrapeEventGivenCity
 
 **Method**: GET  
+**Purpose**: Scrape the event data from the given city.  
 **Required Query Parameter**: city  
 **Permissions**: can only be invoked by application  
 **Example usage**: `https://us-central1-actnow-4b2f5.cloudfunctions.net/scrapeEventGivenCity?city=Toronto`  
@@ -46,7 +47,28 @@ sidebar_position: 2
 ### deleteOutdatedUserEvents
 
 **Method**: GET  
-**Required Query Parameter**: n/a
-**Permissions**: can only be invoked by scheduler
+**Purposes**: Delete all user events that are 2 hours after they were scheduled.  
+**Required Query Parameter**: n/a  
+**Permissions**: can only be invoked by scheduler  
 **Example usage**: `https://us-central1-actnow-4b2f5.cloudfunctions.net/scrapeEventGivenCity?city=Toronto`  
 **Output Format**:
+
+```json
+{
+  "[city]": {
+    "[eventId]": {
+      "attendees": "string[]",
+      "createdBy": "string",
+      "createdByName": "string",
+      "description": "string",
+      "imageUrl": "string",
+      "latitude": "string",
+      "location": "string",
+      "longitude": "string",
+      "numAttendees": "number",
+      "title": "string",
+    }
+  },
+  ...
+}
+```
