@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_geocoding/google_geocoding.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'map_page/add_event.dart';
 
@@ -40,8 +42,10 @@ class EventDetailsState extends State<EventDetails> {
   }
 
   void checkUserCreated() {
-    if (userInfo!["createdBy"] == widget.userCreds!.uid.toString()) {
-      userCreated = true;
+    if (userInfo!.containsKey("createdBy")) {
+      if (userInfo!["createdBy"] == widget.userCreds!.uid.toString()) {
+        userCreated = true;
+      }
     }
   }
 
@@ -147,15 +151,28 @@ class EventDetailsState extends State<EventDetails> {
   }
 
   Map<String, String> formatDate() {
-    var splitDate = userInfo!["dateTime"].toString().split(" ");
-    var formattedDate = splitDate[0] +
-        " " +
-        splitDate[2] +
-        " " +
-        splitDate[1] +
-        " " +
-        splitDate[3];
-    var formattedTime = splitDate[4] + " " + splitDate[5];
+    var splitDate = userInfo!["dateTime"].toString();
+    var commaSplit = splitDate.split(",");
+    var spaceSplit = splitDate.split(" ");
+    String formattedDate;
+    String formattedTime;
+    if (commaSplit.length > 2) {
+      formattedDate = commaSplit[0] +
+          " " +
+          commaSplit[1] +
+          " " +
+          DateTime.now().year.toString();
+      formattedTime = commaSplit[2].split("+")[0];
+    } else {
+      formattedDate = spaceSplit[0] +
+          " " +
+          spaceSplit[2] +
+          " " +
+          spaceSplit[1] +
+          " " +
+          spaceSplit[3];
+      formattedTime = spaceSplit[4] + " " + spaceSplit[5];
+    }
 
     return {"Date": formattedDate, "Time": formattedTime};
   }
@@ -164,7 +181,10 @@ class EventDetailsState extends State<EventDetails> {
     var splitLocation = userInfo!["location"].toString().split(",");
     String formatMainLocation;
     String formatSubLocation;
-    if (splitLocation.length < 4) {
+    if (splitLocation.length <= 2) {
+      formatMainLocation = userInfo!["location"].toString().split("•")[0];
+      formatSubLocation = userInfo!["location"].toString().split("•")[1];
+    } else if (splitLocation.length < 4) {
       formatMainLocation = splitLocation[0];
       formatSubLocation = splitLocation[0].split(" ")[1] +
           ", " +
@@ -283,11 +303,30 @@ class EventDetailsState extends State<EventDetails> {
                             height: 100,
                             child: Align(
                                 alignment: Alignment.topLeft,
-                                child: Text(userInfo!["description"].toString(),
-                                    textAlign: TextAlign.left,
-                                    style: const TextStyle(
-                                      fontSize: 16.0,
-                                    )))),
+                                child: userInfo!["description"]
+                                            .toString()
+                                            .split(":")
+                                            .length >
+                                        1
+                                    ? Linkify(
+                                        onOpen: (link) async {
+                                          if (await canLaunch(link.url)) {
+                                            await launch(link.url);
+                                          } else {
+                                            throw 'Could not launch $link';
+                                          }
+                                        },
+                                        text: userInfo!["description"],
+                                        textAlign: TextAlign.left,
+                                        style: const TextStyle(
+                                          fontSize: 16.0,
+                                        ),
+                                      )
+                                    : Text(userInfo!["description"].toString(),
+                                        textAlign: TextAlign.left,
+                                        style: const TextStyle(
+                                          fontSize: 16.0,
+                                        )))),
                       ])),
                   const SizedBox(height: 20.0),
                   userCreated
