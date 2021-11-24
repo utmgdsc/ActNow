@@ -12,8 +12,8 @@ function capitalize(string) {
 
 exports.scrapeEventGivenCity = functions
   .runWith({
-    timeoutSeconds: 60,
-    memory: '1GB',
+    timeoutSeconds: 120,
+    memory: '2GB',
   })
   .https.onRequest(async (req, res) => {
     functions.logger.info('Starting to scrape...');
