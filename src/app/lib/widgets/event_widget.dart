@@ -11,14 +11,15 @@ class EventWidget extends StatelessWidget {
   final String? creator;
   final String? date_time;
   final int? num_attendees;
+  final bool? saved;
 
-  EventWidget({
-    this.title,
-    this.creator,
-    this.date_time,
-    this.num_attendees,
-    this.img_location,
-  });
+  EventWidget(
+      {this.title,
+      this.creator,
+      this.date_time,
+      this.num_attendees,
+      this.img_location,
+      this.saved});
 
   @override
   Widget build(BuildContext context) {
@@ -73,9 +74,12 @@ class EventWidget extends StatelessWidget {
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
-                                Icons.favorite_border,
-                                color: Colors.black,
+                              child: Icon(
+                                isSaved(saved)
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color:
+                                    isSaved(saved) ? Colors.red : Colors.black,
                               ),
                             ),
                           ),
@@ -107,6 +111,13 @@ class EventWidget extends StatelessWidget {
       ),
     );
   }
+}
+
+bool isSaved(bool? s) {
+  if (s == null) {
+    return false;
+  }
+  return s;
 }
 
 String formatDate(DateTime d) {
