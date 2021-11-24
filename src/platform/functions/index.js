@@ -9,6 +9,7 @@ const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const scrapeCityEvents = async (city) => {
   let eventsArray = [];
   let collectiveEventsArray = [];
+  let parsedDate = '';
 
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
@@ -49,9 +50,17 @@ const scrapeCityEvents = async (city) => {
           `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > a`,
         );
 
+        if (eventDate) {
+          if (eventDate.innerText.indexOf('+') !== -1) {
+            parsedDate = eventDate.innerText.substring(0, eventDate.innerText.indexOf('+') - 1);
+          } else {
+            parsedDate = eventDate.innerText;
+          }
+        }
+
         const newEvent = {
           title: eventTitle ? eventTitle.innerText : '',
-          date: eventDate ? eventDate.innerText : '',
+          date: parsedDate,
           location: eventLoc ? eventLoc.innerText : '',
           ticket: cost ? cost.innerText : '',
           organization: organizedBy ? organizedBy.innerText : '',
