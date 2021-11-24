@@ -6,6 +6,8 @@ admin.initializeApp();
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const capitalize = (string) => string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+
 const scrapeCityEvents = async (city) => {
   let eventsArray = [];
   let collectiveEventsArray = [];
@@ -171,7 +173,7 @@ exports.scrapeEventGivenCity = functions
     let city = '';
     if (req.method === 'GET') {
       if (req.query.city && req.query.city.length !== 0) {
-        city = req.query.city.toLowerCase();
+        city = capitalize(req.query.city);
         functions.logger.info('City: ' + city);
       } else {
         functions.logger.error('No city name provided');
