@@ -59,11 +59,13 @@ class EventWidget extends StatelessWidget {
                   Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
+                        Expanded(
+                            child: Text(
                           title ?? ("Error: Missing Title"),
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               fontSize: 18.0, color: Colors.black),
-                        ),
+                        )),
                         Row(children: [
                           InkResponse(
                             onTap: () {},
@@ -94,13 +96,16 @@ class EventWidget extends StatelessWidget {
                   Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
+                        Expanded(
+                            child: Text(
                           "Posted by " + creator!,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               fontSize: 14.0, color: Colors.black),
-                        ),
+                        )),
                         Text(
                           "+ " + num_attendees.toString() + " attendees",
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               fontSize: 14.0, color: Colors.black),
                         )
