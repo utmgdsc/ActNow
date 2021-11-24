@@ -175,7 +175,7 @@ class MapPageState extends State<MapPage> {
         firestore.collection('events').doc("scraped-events").collection(city);
 
     var scrapedEvents = await scrapedRef.get();
-    print(city);
+    
     if (scrapedEvents.docs.length == 0) {
       var url = Uri.parse(
           'http://us-central1-actnow-4b2f5.cloudfunctions.net/scrapeEventGivenCity?city=' +
