@@ -50,7 +50,6 @@ const scrapeCityEvents = async (city) => {
         const eventUrl = document.querySelector(
           `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > a`,
         );
-
         const followers = document.querySelector(
           `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__sub-content > div:nth-child(3) > div > div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy`,
         );
@@ -73,22 +72,16 @@ const scrapeCityEvents = async (city) => {
           attendees: [],
           numAttendees,
           title: eventTitle ? eventTitle.innerText : '',
-          date: eventDate ? eventDate.innerText : '',
+          dateTime: eventDate ? eventDate.innerText : '',
           location: eventLoc ? eventLoc.innerText : '',
-          ticket: cost ? cost.innerText : '',
-          organization: organizedBy ? organizedBy.innerText : '',
-          img: imgUrl ? imgUrl.getAttribute('src') : '',
-          url: eventUrl ? eventUrl.getAttribute('href') : '',
+          createdByName: organizedBy ? organizedBy.innerText : '',
+          imageUrl: imgUrl ? imgUrl.getAttribute('src') : '',
+          description: eventUrl
+            ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
+                'href',
+              )}`
+            : ticketInfo,
         };
-
-        if (
-          !(
-            newEvent.ticket.substring(0, 4) === 'Free' ||
-            newEvent.ticket.substring(0, 9) === 'Starts at'
-          )
-        ) {
-          newEvent.ticket = '';
-        }
 
         if (!(newEvent.title === '')) {
           events.push(newEvent);
