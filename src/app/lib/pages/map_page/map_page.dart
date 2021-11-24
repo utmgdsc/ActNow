@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:actnow/pages/event_details.dart';
-import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +38,7 @@ class MapPageState extends State<MapPage> {
   late LatLng droppedIn;
   bool disableAddEvent = false;
   var currentLocation;
+  var country;
   LatLng defaultLocation = const LatLng(43.55103829955488, -79.66262838104547);
 
   @override
@@ -154,6 +155,8 @@ class MapPageState extends State<MapPage> {
     List<String> splitAddress =
         result!.results![0].formattedAddress!.split(',');
 
+    country = splitAddress[splitAddress.length - 1];
+
     if (splitAddress.length >= 5) {
       city = splitAddress[2].trim();
     } else if (splitAddress.length == 3) {
@@ -163,6 +166,8 @@ class MapPageState extends State<MapPage> {
       city = splitAddress[1].trim();
     }
 
+    city = city.toLowerCase();
+
     CollectionReference<Map<String, dynamic>> ref =
         firestore.collection('events').doc("custom").collection(city);
 
@@ -170,12 +175,36 @@ class MapPageState extends State<MapPage> {
         firestore.collection('events').doc("scraped-events").collection(city);
 
     var scrapedEvents = await scrapedRef.get();
-
+    print(city);
+    if (scrapedEvents.docs.length == 0) {
+      var url = Uri.parse(
+          'http://us-central1-actnow-4b2f5.cloudfunctions.net/scrapeEventGivenCity?city=' +
+              city.replaceAll(' ', '').toLowerCase());
+      http.Response response = await http.get(url);
+      try {
+        if (response.statusCode == 200) {
+          scrapedRef = firestore
+              .collection('events')
+              .doc("scraped-events")
+              .collection(city);
+          scrapedEvents = await scrapedRef.get();
+        } else {
+          // some error message
+        }
+      } catch (e) {
+        //
+      }
+    }
     for (var element in scrapedEvents.docs) {
-      var result = await geocoding.locationFromAddress(element["location"]);
-      if (!(result.isEmpty)) {
-        var pos = LatLng(result[0].latitude,
-            result[0].longitude);
+      var result;
+      try {
+        result = await googleGeocoding.geocoding.get(element["location"], []);
+      } catch (e) {
+        result = [];
+      }
+      if (!(result!.results!.isEmpty)) {
+        var pos = LatLng(result.results![0].geometry!.location!.lat!,
+            result.results![0].geometry!.location!.lng!);
         var markerToAdd = Marker(
             markerId: MarkerId(pos.toString()),
             onTap: () {
