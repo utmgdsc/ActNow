@@ -218,8 +218,8 @@ exports.deleteOutdatedUserEvents = functions
 
 exports.periodicRescraper = functions
   .runWith({
-    timeoutSeconds: 60,
-    memory: '1GB',
+    timeoutSeconds: 120,
+    memory: '2GB',
   })
   .https.onRequest(async (_, res) => {
     const timestamp = await admin
