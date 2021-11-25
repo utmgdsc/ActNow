@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:actnow/pages/event_details.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -30,6 +31,7 @@ class MapPageState extends State<MapPage> {
   bool addedNewEvent = false;
   Map<String, String> formDetails = {};
   bool allEventsRead = false;
+  bool allScrapedEventsRead = false;
   bool allUsersRead = false;
   final List<Marker> _markers = [];
   final Completer<GoogleMapController> _controller = Completer();
@@ -37,11 +39,11 @@ class MapPageState extends State<MapPage> {
   bool disableAddEvent = false;
   var currentLocation;
   LatLng defaultLocation = const LatLng(43.55103829955488, -79.66262838104547);
+  late CollectionReference<Map<String, dynamic>> customRef;
 
   @override
   void initState() {
     super.initState();
-    print(widget.userLocation);
     if (widget.userLocation == null) {
       currentLocation = defaultLocation;
     } else {
@@ -162,42 +164,98 @@ class MapPageState extends State<MapPage> {
       city = splitAddress[1].trim();
     }
 
-    CollectionReference<Map<String, dynamic>> ref =
-        firestore.collection('events').doc("custom").collection(city);
+    city = city.toLowerCase();
 
-    await ref.get().then((value) => {
-          value.docs.forEach((element) {
-            var pos = LatLng(element["latitude"], element["longitude"]);
-            var markerToAdd = Marker(
-                markerId: MarkerId(pos.toString()),
-                onTap: () {
-                  Route route = MaterialPageRoute(
-                      builder: (context) => EventDetails(
-                          userCreds: widget.userCreds,
-                          collectionRef: ref,
-                          eventUid: element.id));
-                  Navigator.push(context, route).then((value) => setState(() {
-                        if (value != null) {
-                          _markers.removeWhere((marker) =>
-                              marker.markerId.value ==
-                              LatLng(value.latitude, value.longitude)
-                                  .toString());
-                        }
-                      }));
-                },
-                position: pos,
-                draggable: true,
-                onDragEnd: (dragPos) {
-                  droppedIn = dragPos;
-                });
-            if (!_markers.contains(markerToAdd)) {
-              _markers.add(markerToAdd);
-            }
-          }),
-          setState(() {
-            allEventsRead = true;
-          })
-        });
+    customRef = firestore.collection('events').doc("custom").collection(city);
+
+    CollectionReference<Map<String, dynamic>> scrapedRef =
+        firestore.collection('events').doc("scraped-events").collection(city);
+
+    var scrapedEvents = await scrapedRef.get();
+
+    if (scrapedEvents.docs.length == 0) {
+      var url = Uri.parse(
+          'http://us-central1-actnow-4b2f5.cloudfunctions.net/scrapeEventGivenCity?city=' +
+              city.replaceAll(' ', '').toLowerCase());
+      http.Response response = await http.get(url);
+      try {
+        if (response.statusCode == 200) {
+          scrapedRef = firestore
+              .collection('events')
+              .doc("scraped-events")
+              .collection(city);
+          scrapedEvents = await scrapedRef.get();
+        } else {
+          // some error message
+        }
+      } catch (e) {
+        //
+      }
+    }
+    for (var element in scrapedEvents.docs) {
+      var result;
+      try {
+        result = await googleGeocoding.geocoding.get(element["location"], []);
+      } catch (e) {
+        result = [];
+      }
+      if (!(result!.results!.isEmpty)) {
+        var pos = LatLng(result.results![0].geometry!.location!.lat!,
+            result.results![0].geometry!.location!.lng!);
+        var markerToAdd = Marker(
+            markerId: MarkerId(pos.toString()),
+            onTap: () {
+              Route route = MaterialPageRoute(
+                  builder: (context) => EventDetails(
+                      userCreds: widget.userCreds,
+                      collectionRef: scrapedRef,
+                      eventUid: element.id));
+              Navigator.push(context, route);
+            },
+            position: pos);
+
+        _markers.add(markerToAdd);
+      }
+    }
+    setState(() {
+      allScrapedEventsRead = true;
+    });
+
+    readCustomEvents();
+  }
+
+  void readCustomEvents() async {
+    var events = await customRef.get();
+    for (var element in events.docs) {
+      var pos = LatLng(element["latitude"], element["longitude"]);
+      var markerToAdd = Marker(
+          markerId: MarkerId(pos.toString()),
+          onTap: () {
+            Route route = MaterialPageRoute(
+                builder: (context) => EventDetails(
+                    userCreds: widget.userCreds,
+                    collectionRef: customRef,
+                    eventUid: element.id));
+            Navigator.push(context, route).then((value) => setState(() {
+                  if (value != null) {
+                    _markers.removeWhere((marker) =>
+                        marker.markerId.value ==
+                        LatLng(value.latitude, value.longitude).toString());
+                  }
+                }));
+          },
+          position: pos,
+          draggable: true,
+          onDragEnd: (dragPos) {
+            droppedIn = dragPos;
+          });
+      if (!_markers.contains(markerToAdd)) {
+        _markers.add(markerToAdd);
+      }
+    }
+    setState(() {
+      allEventsRead = true;
+    });
   }
 
   void _moveToCurrentLocation() async {
@@ -246,7 +304,8 @@ class MapPageState extends State<MapPage> {
 
     if (allEventsRead == false ||
         allUsersRead == false ||
-        currentLocation == null) {
+        currentLocation == null ||
+        allScrapedEventsRead == false) {
       return Scaffold(
           body: SizedBox(
         height: heightVariable,
@@ -276,7 +335,7 @@ class MapPageState extends State<MapPage> {
                         {
                           formDetails = {},
                           clearAddedMarker(),
-                          getAllEvents(),
+                          readCustomEvents()
                         }
                       else if (value != null)
                         {
