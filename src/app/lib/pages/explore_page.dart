@@ -105,6 +105,8 @@ class ExplorePageState extends State<ExplorePage> {
       city = splitAddress[1].trim();
     }
 
+    city = city.toLowerCase();
+
     CollectionReference<Map<String, dynamic>> events =
         firestore.collection('events').doc("custom").collection(city);
 

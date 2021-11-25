@@ -90,7 +90,7 @@ class AddEventState extends State<AddEvent> {
         CollectionReference ref = firestore
             .collection('events')
             .doc("custom")
-            .collection(userAddress!);
+            .collection(userAddress!.toLowerCase());
 
         List<String> emptyList = [];
         String? imageUrl;
