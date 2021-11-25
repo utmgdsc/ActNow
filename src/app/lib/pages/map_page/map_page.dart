@@ -39,6 +39,7 @@ class MapPageState extends State<MapPage> {
   bool disableAddEvent = false;
   var currentLocation;
   LatLng defaultLocation = const LatLng(43.55103829955488, -79.66262838104547);
+  late CollectionReference<Map<String, dynamic>> customRef;
 
   @override
   void initState() {
@@ -153,7 +154,7 @@ class MapPageState extends State<MapPage> {
 
     List<String> splitAddress =
         result!.results![0].formattedAddress!.split(',');
-        
+
     if (splitAddress.length >= 5) {
       city = splitAddress[2].trim();
     } else if (splitAddress.length == 3) {
@@ -165,8 +166,7 @@ class MapPageState extends State<MapPage> {
 
     city = city.toLowerCase();
 
-    CollectionReference<Map<String, dynamic>> ref =
-        firestore.collection('events').doc("custom").collection(city);
+    customRef = firestore.collection('events').doc("custom").collection(city);
 
     CollectionReference<Map<String, dynamic>> scrapedRef =
         firestore.collection('events').doc("scraped-events").collection(city);
@@ -221,7 +221,11 @@ class MapPageState extends State<MapPage> {
       allScrapedEventsRead = true;
     });
 
-    var events = await ref.get();
+    readCustomEvents();
+  }
+
+  void readCustomEvents() async {
+    var events = await customRef.get();
     for (var element in events.docs) {
       var pos = LatLng(element["latitude"], element["longitude"]);
       var markerToAdd = Marker(
@@ -230,7 +234,7 @@ class MapPageState extends State<MapPage> {
             Route route = MaterialPageRoute(
                 builder: (context) => EventDetails(
                     userCreds: widget.userCreds,
-                    collectionRef: ref,
+                    collectionRef: customRef,
                     eventUid: element.id));
             Navigator.push(context, route).then((value) => setState(() {
                   if (value != null) {
@@ -331,7 +335,7 @@ class MapPageState extends State<MapPage> {
                         {
                           formDetails = {},
                           clearAddedMarker(),
-                          getAllEvents(),
+                          readCustomEvents()
                         }
                       else if (value != null)
                         {
