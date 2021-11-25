@@ -6,6 +6,8 @@ admin.initializeApp();
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const capitalize = (string) => string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+
 const scrapeCityEvents = async (city) => {
   let eventsArray = [];
   let collectiveEventsArray = [];
@@ -49,6 +51,23 @@ const scrapeCityEvents = async (city) => {
         const eventUrl = document.querySelector(
           `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > a`,
         );
+        const followers = document.querySelector(
+          `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__sub-content > div:nth-child(3) > div > div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy`,
+        );
+
+        let ticketInfo = cost ? cost.innerText : '';
+        if (ticketInfo.substring(0, 4) === 'Free' || ticketInfo.substring(0, 9) === 'Starts at') {
+          ticketInfo = `Registration Cost: ${ticketInfo}. `;
+        } else {
+          ticketInfo = '';
+        }
+
+        let numAttendees = 0;
+        if (followers && followers.innerText) {
+          numAttendees = followers.innerText.includes('k')
+            ? parseInt(parseFloat(followers.innerText) * 1000, 10)
+            : parseInt(followers.innerText, 10);
+        }
 
         if (eventDate) {
           if (eventDate.innerText.indexOf('+') !== -1) {
@@ -59,23 +78,19 @@ const scrapeCityEvents = async (city) => {
         }
 
         const newEvent = {
+          attendees: [],
+          numAttendees,
           title: eventTitle ? eventTitle.innerText : '',
-          date: parsedDate,
+          dateTime: parsedDate,
           location: eventLoc ? eventLoc.innerText : '',
-          ticket: cost ? cost.innerText : '',
-          organization: organizedBy ? organizedBy.innerText : '',
-          img: imgUrl ? imgUrl.getAttribute('src') : '',
-          url: eventUrl ? eventUrl.getAttribute('href') : '',
+          createdByName: organizedBy ? organizedBy.innerText : '',
+          imageUrl: imgUrl ? imgUrl.getAttribute('src') : '',
+          description: eventUrl
+            ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
+                'href',
+              )}`
+            : ticketInfo,
         };
-
-        if (
-          !(
-            newEvent.ticket.substring(0, 4) === 'Free' ||
-            newEvent.ticket.substring(0, 9) === 'Starts at'
-          )
-        ) {
-          newEvent.ticket = '';
-        }
 
         if (!(newEvent.title === '')) {
           events.push(newEvent);
@@ -160,7 +175,7 @@ exports.scrapeEventGivenCity = functions
     let city = '';
     if (req.method === 'GET') {
       if (req.query.city && req.query.city.length !== 0) {
-        city = req.query.city.toLowerCase();
+        city = capitalize(req.query.city);
         functions.logger.info('City: ' + city);
       } else {
         functions.logger.error('No city name provided');
