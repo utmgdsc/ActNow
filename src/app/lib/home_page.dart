@@ -41,7 +41,7 @@ class _HomePageState extends State<HomePage> {
           userLocation: currLoc,
           onUpdateLocation: (newLoc) => onRefresh(newLoc)),
       ExplorePage(userCreds: widget.userCreds, userLocation: currLoc),
-      const SavedPage(),
+      SavedPage(userCreds: widget.userCreds, userLocation: currLoc),
       ProfilePage(
           userCreds: widget.userCreds,
           onSignOut: widget.onSignOut,
@@ -140,7 +140,7 @@ class _HomePageState extends State<HomePage> {
             userLocation: newLocation,
             onUpdateLocation: (newLoc) => onRefresh(newLoc)),
         ExplorePage(userCreds: widget.userCreds, userLocation: newLocation),
-        const SavedPage(),
+        SavedPage(userCreds: widget.userCreds, userLocation: newLocation),
         ProfilePage(
             userCreds: widget.userCreds,
             onSignOut: widget.onSignOut,

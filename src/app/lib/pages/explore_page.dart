@@ -18,7 +18,7 @@ class LocalEventDetails {
   final int? num_attendees;
   final String? id;
   final CollectionReference<Map<String, dynamic>>? ref;
-  final bool? saved;
+  bool? saved;
 
   LocalEventDetails(
       {this.title,
