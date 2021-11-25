@@ -11,6 +11,8 @@ const lowercase = (string) => string.toLowerCase();
 const scrapeCityEvents = async (city) => {
   let eventsArray = [];
   let collectiveEventsArray = [];
+  let parsedDate = '';
+  let parsedImgUrl = '';
 
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
@@ -68,14 +70,28 @@ const scrapeCityEvents = async (city) => {
             : parseInt(followers.innerText, 10);
         }
 
+        if (eventDate) {
+          if (eventDate.innerText.indexOf('+') !== -1) {
+            parsedDate = eventDate.innerText.substring(0, eventDate.innerText.indexOf('+') - 1);
+          } else {
+            parsedDate = eventDate.innerText;
+          }
+        }
+
+        if (imgUrl) {
+          if (!imgUrl.getAttribute('src').includes('data:image/gif;base64')) {
+            parsedImgUrl = imgUrl.getAttribute('src');
+          }
+        }
+
         const newEvent = {
           attendees: [],
           numAttendees,
           title: eventTitle ? eventTitle.innerText : '',
-          dateTime: eventDate ? eventDate.innerText : '',
+          dateTime: parsedDate,
           location: eventLoc ? eventLoc.innerText : '',
           createdByName: organizedBy ? organizedBy.innerText : '',
-          imageUrl: imgUrl ? imgUrl.getAttribute('src') : '',
+          imageUrl: parsedImgUrl,
           description: eventUrl
             ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
                 'href',
