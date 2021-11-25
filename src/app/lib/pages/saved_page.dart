@@ -95,10 +95,14 @@ class SavedPageState extends State<SavedPage> {
       city = splitAddress[1].trim();
     }
 
+    city = city.toLowerCase();
     //temp code ends
 
     CollectionReference<Map<String, dynamic>> events =
         firestore.collection('events').doc("custom").collection(city);
+
+    CollectionReference<Map<String, dynamic>> scrapedEvents =
+        firestore.collection('events').doc("scraped-events").collection(city);
 
     await updateInfo();
 
@@ -127,6 +131,34 @@ class SavedPageState extends State<SavedPage> {
                   creator: element['createdByName'],
                   id: element.id,
                   ref: events,
+                  saved: is_saved));
+            }
+          })
+        });
+
+    await scrapedEvents.get().then((value) => {
+          value.docs.forEach((element) async {
+            bool is_saved = saved_list.contains(element.id);
+            bool is_joined =
+                element['attendees'].contains(widget.userCreds!.uid);
+
+            bool defaults = (searchSaved == false &&
+                    searchJoined == false &&
+                    searchCreated == false) &&
+                (is_saved || is_joined);
+
+            if (defaults ||
+                (is_saved && searchSaved) ||
+                (is_joined && searchJoined) ||
+                (searchCreated)) {
+              eventsList.add(LocalEventDetails(
+                  title: element['title'],
+                  num_attendees: element['numAttendees'],
+                  img_location: element['imageUrl'],
+                  date_time: element['dateTime'],
+                  creator: element['createdByName'],
+                  id: element.id,
+                  ref: scrapedEvents,
                   saved: is_saved));
             }
           })
