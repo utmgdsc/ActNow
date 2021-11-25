@@ -142,15 +142,17 @@ class SavedPageState extends State<SavedPage> {
             bool is_joined =
                 element['attendees'].contains(widget.userCreds!.uid);
 
+            bool is_created = false;
+
             bool defaults = (searchSaved == false &&
                     searchJoined == false &&
                     searchCreated == false) &&
-                (is_saved || is_joined);
+                (is_saved || is_joined || is_created);
 
             if (defaults ||
                 (is_saved && searchSaved) ||
                 (is_joined && searchJoined) ||
-                (searchCreated)) {
+                (is_created)) {
               eventsList.add(LocalEventDetails(
                   title: element['title'],
                   num_attendees: element['numAttendees'],
