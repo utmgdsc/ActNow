@@ -29,6 +29,10 @@ class SavedPageState extends State<SavedPage> {
   List<LocalEventDetails>? exploreEvents = null;
   List<LocalEventDetails>? unfilteredEvents = null;
 
+  late bool searchSaved;
+  late bool searchJoined;
+  late bool searchCreated;
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +44,8 @@ class SavedPageState extends State<SavedPage> {
       currentLocation = widget.userLocation;
     }
     _futureList = getEventData();
+
+    searchSaved = searchJoined = searchCreated = false;
   }
 
   late Map<String, dynamic>? userInfo;
@@ -150,9 +156,86 @@ class SavedPageState extends State<SavedPage> {
             child: Column(
               children: [
                 buildSearch(),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  SizedBox(
+                    width: 100,
+                    height: 30.0,
+                    child: Material(
+                      borderRadius: BorderRadius.circular(20.0),
+                      shadowColor: Colors.grey,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          primary: searchSaved ? Colors.blue : Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() => searchSaved = !searchSaved);
+                        },
+                        child: const Center(
+                          child: Text(
+                            'Saved',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 5.0),
+                  SizedBox(
+                    width: 100,
+                    height: 30.0,
+                    child: Material(
+                      borderRadius: BorderRadius.circular(20.0),
+                      shadowColor: Colors.grey,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          primary: searchJoined ? Colors.blue : Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() => searchJoined = !searchJoined);
+                        },
+                        child: const Center(
+                          child: Text(
+                            'Joined',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 5.0),
+                  SizedBox(
+                    width: 100,
+                    height: 30.0,
+                    child: Material(
+                      borderRadius: BorderRadius.circular(20.0),
+                      shadowColor: Colors.grey,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          primary: searchCreated ? Colors.blue : Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() => searchCreated = !searchCreated);
+                        },
+                        child: const Center(
+                          child: Text(
+                            'Created',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 10.0),
                 Expanded(
                   child: FutureBuilder(
-                    initialData: [],
+                    initialData: const [],
                     future: _futureList,
                     builder: (context, AsyncSnapshot<List> snapshot) {
                       return ListView.builder(
