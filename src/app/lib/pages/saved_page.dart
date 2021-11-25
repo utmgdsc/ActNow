@@ -106,7 +106,19 @@ class SavedPageState extends State<SavedPage> {
     await events.get().then((value) => {
           value.docs.forEach((element) async {
             bool is_saved = saved_list.contains(element.id);
-            if (is_saved) {
+            bool is_joined =
+                element['attendees'].contains(widget.userCreds!.uid);
+            bool is_created = element['createdBy'] == widget.userCreds!.uid;
+
+            bool defaults = (searchSaved == false &&
+                    searchJoined == false &&
+                    searchCreated == false) &&
+                (is_saved || is_joined || is_created);
+
+            if (defaults ||
+                (is_saved && searchSaved) ||
+                (is_joined && searchJoined) ||
+                (is_created && searchCreated)) {
               eventsList.add(LocalEventDetails(
                   title: element['title'],
                   num_attendees: element['numAttendees'],
@@ -169,6 +181,7 @@ class SavedPageState extends State<SavedPage> {
                         ),
                         onPressed: () {
                           setState(() => searchSaved = !searchSaved);
+                          getEventData();
                         },
                         child: const Center(
                           child: Text(
@@ -194,6 +207,7 @@ class SavedPageState extends State<SavedPage> {
                         ),
                         onPressed: () {
                           setState(() => searchJoined = !searchJoined);
+                          getEventData();
                         },
                         child: const Center(
                           child: Text(
@@ -219,6 +233,7 @@ class SavedPageState extends State<SavedPage> {
                         ),
                         onPressed: () {
                           setState(() => searchCreated = !searchCreated);
+                          getEventData();
                         },
                         child: const Center(
                           child: Text(
@@ -257,7 +272,7 @@ class SavedPageState extends State<SavedPage> {
                                         }));
                               },
                               onDoubleTap: () {
-                                updated_saved_item(snapshot.data![index].id);
+                                updated_saved_item(exploreEvents![index].id);
                               },
                               child: EventWidget(
                                 title: exploreEvents![index].title,
@@ -278,7 +293,7 @@ class SavedPageState extends State<SavedPage> {
             )));
   }
 
-  void updated_saved_item(String event_id) {
+  void updated_saved_item(String? event_id) {
     int event_index =
         exploreEvents!.indexWhere((element) => element.id == event_id);
 
