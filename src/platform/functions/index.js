@@ -29,7 +29,6 @@ const scrapeCityEvents = async (city) => {
     eventsArray = await page.evaluate(async () => {
       const events = [];
       for (let i = 1; i <= 60; i += 1) {
-
         let parsedDate = '';
         let parsedImgUrl = '';
 
@@ -84,7 +83,6 @@ const scrapeCityEvents = async (city) => {
           parsedImgUrl = imgUrl.getAttribute('data-src');
         }
 
-
         const newEvent = {
           attendees: [],
           numAttendees,
@@ -95,8 +93,8 @@ const scrapeCityEvents = async (city) => {
           imageUrl: parsedImgUrl,
           description: eventUrl
             ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
-              'href',
-            )}`
+                'href',
+              )}`
             : ticketInfo,
         };
 
