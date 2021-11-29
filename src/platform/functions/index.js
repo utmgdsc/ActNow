@@ -11,8 +11,6 @@ const lowercase = (string) => string.toLowerCase();
 const scrapeCityEvents = async (city) => {
   let eventsArray = [];
   let collectiveEventsArray = [];
-  let parsedDate = '';
-  let parsedImgUrl = '';
 
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
@@ -31,6 +29,10 @@ const scrapeCityEvents = async (city) => {
     eventsArray = await page.evaluate(async () => {
       const events = [];
       for (let i = 1; i <= 60; i += 1) {
+
+        let parsedDate = '';
+        let parsedImgUrl = '';
+
         const eventTitle = document.querySelector(
           `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > a > h3 > div > div.eds-event-card__formatted-name--is-clamped.eds-event-card__formatted-name--is-clamped-three.eds-text-weight--heavy`,
         );
@@ -79,10 +81,9 @@ const scrapeCityEvents = async (city) => {
         }
 
         if (imgUrl) {
-          if (!imgUrl.getAttribute('src').includes('data:image/gif;base64')) {
-            parsedImgUrl = imgUrl.getAttribute('src');
-          }
+          parsedImgUrl = imgUrl.getAttribute('data-src');
         }
+
 
         const newEvent = {
           attendees: [],
@@ -94,8 +95,8 @@ const scrapeCityEvents = async (city) => {
           imageUrl: parsedImgUrl,
           description: eventUrl
             ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
-                'href',
-              )}`
+              'href',
+            )}`
             : ticketInfo,
         };
 
