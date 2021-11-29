@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:actnow/pages/event_details.dart';
-import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +39,7 @@ class MapPageState extends State<MapPage> {
   bool disableAddEvent = false;
   var currentLocation;
   LatLng defaultLocation = const LatLng(43.55103829955488, -79.66262838104547);
+  late CollectionReference<Map<String, dynamic>> customRef;
 
   @override
   void initState() {
@@ -163,19 +164,44 @@ class MapPageState extends State<MapPage> {
       city = splitAddress[1].trim();
     }
 
-    CollectionReference<Map<String, dynamic>> ref =
-        firestore.collection('events').doc("custom").collection(city);
+    city = city.toLowerCase();
+
+    customRef = firestore.collection('events').doc("custom").collection(city);
 
     CollectionReference<Map<String, dynamic>> scrapedRef =
         firestore.collection('events').doc("scraped-events").collection(city);
 
     var scrapedEvents = await scrapedRef.get();
 
+    if (scrapedEvents.docs.length == 0) {
+      var url = Uri.parse(
+          'http://us-central1-actnow-4b2f5.cloudfunctions.net/scrapeEventGivenCity?city=' +
+              city.replaceAll(' ', '').toLowerCase());
+      http.Response response = await http.get(url);
+      try {
+        if (response.statusCode == 200) {
+          scrapedRef = firestore
+              .collection('events')
+              .doc("scraped-events")
+              .collection(city);
+          scrapedEvents = await scrapedRef.get();
+        } else {
+          // some error message
+        }
+      } catch (e) {
+        //
+      }
+    }
     for (var element in scrapedEvents.docs) {
-      var result = await geocoding.locationFromAddress(element["location"]);
-      if (!(result.isEmpty)) {
-        var pos = LatLng(result[0].latitude,
-            result[0].longitude);
+      var result;
+      try {
+        result = await googleGeocoding.geocoding.get(element["location"], []);
+      } catch (e) {
+        result = [];
+      }
+      if (!(result!.results!.isEmpty)) {
+        var pos = LatLng(result.results![0].geometry!.location!.lat!,
+            result.results![0].geometry!.location!.lng!);
         var markerToAdd = Marker(
             markerId: MarkerId(pos.toString()),
             onTap: () {
@@ -195,7 +221,11 @@ class MapPageState extends State<MapPage> {
       allScrapedEventsRead = true;
     });
 
-    var events = await ref.get();
+    readCustomEvents();
+  }
+
+  void readCustomEvents() async {
+    var events = await customRef.get();
     for (var element in events.docs) {
       var pos = LatLng(element["latitude"], element["longitude"]);
       var markerToAdd = Marker(
@@ -204,7 +234,7 @@ class MapPageState extends State<MapPage> {
             Route route = MaterialPageRoute(
                 builder: (context) => EventDetails(
                     userCreds: widget.userCreds,
-                    collectionRef: ref,
+                    collectionRef: customRef,
                     eventUid: element.id));
             Navigator.push(context, route).then((value) => setState(() {
                   if (value != null) {
@@ -305,7 +335,7 @@ class MapPageState extends State<MapPage> {
                         {
                           formDetails = {},
                           clearAddedMarker(),
-                          getAllEvents(),
+                          readCustomEvents()
                         }
                       else if (value != null)
                         {

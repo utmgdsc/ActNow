@@ -18,7 +18,7 @@ class LocalEventDetails {
   final int? num_attendees;
   final String? id;
   final CollectionReference<Map<String, dynamic>>? ref;
-  final bool? saved;
+  bool? saved;
 
   LocalEventDetails(
       {this.title,
@@ -104,6 +104,8 @@ class ExplorePageState extends State<ExplorePage> {
     } else {
       city = splitAddress[1].trim();
     }
+
+    city = city.toLowerCase();
 
     CollectionReference<Map<String, dynamic>> events =
         firestore.collection('events').doc("custom").collection(city);
