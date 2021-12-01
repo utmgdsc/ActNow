@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:actnow/pages/event_details.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -31,7 +32,7 @@ class MapPageState extends State<MapPage> {
   bool addedNewEvent = false;
   Map<String, String> formDetails = {};
   bool allEventsRead = false;
-  bool allScrapedEventsRead = false;
+  bool allScrapedRead = false;
   bool allUsersRead = false;
   final List<Marker> _markers = [];
   final Completer<GoogleMapController> _controller = Completer();
@@ -62,8 +63,8 @@ class MapPageState extends State<MapPage> {
   }
 
   void _loadMapData() async {
-    await getAllEvents();
     await getAllUsers();
+    await getAllEvents();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -168,6 +169,8 @@ class MapPageState extends State<MapPage> {
 
     customRef = firestore.collection('events').doc("custom").collection(city);
 
+    readCustomEvents();
+
     CollectionReference<Map<String, dynamic>> scrapedRef =
         firestore.collection('events').doc("scraped-events").collection(city);
 
@@ -192,6 +195,7 @@ class MapPageState extends State<MapPage> {
         //
       }
     }
+
     for (var element in scrapedEvents.docs) {
       var result;
       try {
@@ -218,10 +222,8 @@ class MapPageState extends State<MapPage> {
       }
     }
     setState(() {
-      allScrapedEventsRead = true;
+      allScrapedRead = true;
     });
-
-    readCustomEvents();
   }
 
   void readCustomEvents() async {
@@ -304,8 +306,7 @@ class MapPageState extends State<MapPage> {
 
     if (allEventsRead == false ||
         allUsersRead == false ||
-        currentLocation == null ||
-        allScrapedEventsRead == false) {
+        currentLocation == null) {
       return Scaffold(
           body: SizedBox(
         height: heightVariable,
@@ -316,74 +317,82 @@ class MapPageState extends State<MapPage> {
       ));
     }
     return Scaffold(
-      floatingActionButton:
-          Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-        Visibility(
-            visible: disableAddEvent,
-            child: FloatingActionButton(
-              heroTag: "btn2",
-              onPressed: () {
-                Route route = MaterialPageRoute(
-                    builder: (context) => AddEvent(
-                          userCreds: widget.userCreds,
-                          droppedPin: droppedIn,
-                          updateEvent: null,
-                          formDetail: formDetails,
-                        ));
-                Navigator.push(context, route).then((value) => {
-                      if (value == "Added")
-                        {
-                          formDetails = {},
-                          clearAddedMarker(),
-                          readCustomEvents()
-                        }
-                      else if (value != null)
-                        {
-                          formDetails = value,
-                        }
-                      else
-                        {
-                          formDetails = {},
-                          if (_markers.remove(_markers.last))
-                            {
-                              setState(() {
-                                addedNewEvent = false;
-                                disableAddEvent = false;
-                              })
-                            }
-                        }
-                    });
-              },
-              child: const Icon(
-                Icons.add,
-                color: Colors.blue,
-              ),
-              backgroundColor: Colors.white,
-            )),
-        const SizedBox(height: 15),
-        FloatingActionButton(
-          onPressed: () async {
-            _getCurrentLocation()
-                .then((value) => {_loadMapData(), _moveToCurrentLocation()});
-          },
-          child: const Icon(
-            Icons.my_location,
-            color: Colors.blue,
+        floatingActionButton:
+            Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+          Visibility(
+              visible: disableAddEvent,
+              child: FloatingActionButton(
+                heroTag: "btn2",
+                onPressed: () {
+                  Route route = MaterialPageRoute(
+                      builder: (context) => AddEvent(
+                            userCreds: widget.userCreds,
+                            droppedPin: droppedIn,
+                            updateEvent: null,
+                            formDetail: formDetails,
+                          ));
+                  Navigator.push(context, route).then((value) => {
+                        if (value == "Added")
+                          {
+                            formDetails = {},
+                            clearAddedMarker(),
+                            readCustomEvents()
+                          }
+                        else if (value != null)
+                          {
+                            formDetails = value,
+                          }
+                        else
+                          {
+                            formDetails = {},
+                            if (_markers.remove(_markers.last))
+                              {
+                                setState(() {
+                                  addedNewEvent = false;
+                                  disableAddEvent = false;
+                                })
+                              }
+                          }
+                      });
+                },
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.blue,
+                ),
+                backgroundColor: Colors.white,
+              )),
+          const SizedBox(height: 15),
+          FloatingActionButton(
+            onPressed: () async {
+              _getCurrentLocation()
+                  .then((value) => {_loadMapData(), _moveToCurrentLocation()});
+            },
+            child: const Icon(
+              Icons.my_location,
+              color: Colors.blue,
+            ),
+            backgroundColor: Colors.white,
           ),
-          backgroundColor: Colors.white,
-        ),
-      ]),
-      body: GoogleMap(
-          myLocationButtonEnabled: false,
-          zoomControlsEnabled: false,
-          onMapCreated: _onMapCreated,
-          markers: Set<Marker>.of(_markers),
-          onTap: handleTap,
-          initialCameraPosition: CameraPosition(
-              target:
-                  LatLng(currentLocation.latitude, currentLocation.longitude),
-              zoom: 15)),
-    );
+        ]),
+        body: Stack(children: [
+          GoogleMap(
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              onMapCreated: _onMapCreated,
+              markers: Set<Marker>.of(_markers),
+              onTap: handleTap,
+              initialCameraPosition: CameraPosition(
+                  target: LatLng(
+                      currentLocation.latitude, currentLocation.longitude),
+                  zoom: 15)),
+          Visibility(
+              visible: !allScrapedRead,
+              child: const Align(
+                  widthFactor: 2,
+                  heightFactor: 19,
+                  alignment: Alignment.bottomCenter,
+                  child: CircularProgressIndicator())),
+        ]));
   }
 }
 
