@@ -1,6 +1,7 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const { Cluster } = require('puppeteer-cluster');
+const { app } = require('firebase-admin');
 
 admin.initializeApp();
 
@@ -83,18 +84,33 @@ const scrapeCityEvents = async (city) => {
           parsedImgUrl = imgUrl.getAttribute('data-src');
         }
 
+        if (eventLoc) {
+          const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${eventLoc.innerText}&key=AIzaSyCFm3jPZv8BgY7sXh5QS8X6WNpApmfD8OQ`);
+          const geoData = await response.json();
+          console.log(geoData);
+          const lat = geoData["results"]["geometry"]["location"]["lat"];
+          const lng = geoData["results"]["geometry"]["location"]["lng"];
+        } else {          // Else If no event location found then
+          const lat = NaN // Invalid location
+          const lng = NaN // Invalid location
+        }
+
         const newEvent = {
           attendees: [],
           numAttendees,
           title: eventTitle ? eventTitle.innerText : '',
           dateTime: parsedDate,
-          location: eventLoc ? eventLoc.innerText : '',
+          location: {
+            address: eventLoc ? eventLoc.innerText : '',
+            latitude: lat,
+            longitude: lng
+          },
           createdByName: organizedBy ? organizedBy.innerText : '',
           imageUrl: parsedImgUrl,
           description: eventUrl
             ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
-                'href',
-              )}`
+              'href',
+            )}`
             : ticketInfo,
         };
 
