@@ -5,7 +5,7 @@
 </p>
 
 <p align="center"> 
-   <a href="https://app.netlify.com/sites/viatimetable/deploys">
+   <a href="https://app.netlify.com/sites/act-now/deploys">
     <img alt="Build Status" src="https://api.netlify.com/api/v1/badges/1762c5e5-df26-4f3d-9456-cd1a96cb587b/deploy-status">
   </a>
   <a href="https://github.com/UTM-Hacklab/VIAplanner/blob/master/LICENSE">
