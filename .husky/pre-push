@@ -2,6 +2,7 @@
 . "$(dirname "$0")/_/husky.sh"
 
 # Check ESLint Standards
+cd src/platforms/functions
 npm run lint ||
 (
         echo '😤🏀👋😤 Failed linting! 😤🏀👋😤 
