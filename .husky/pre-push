@@ -1,0 +1,14 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Check ESLint Standards
+cd src/platform/functions
+npm run lint ||
+(
+        echo '😤🏀👋😤 Failed linting! 😤🏀👋😤 
+                ESLint Check Failed. Make the required changes listed above, add changes and try to commit again.'
+        false; 
+)
+
+# If everything passes... Now we can commit
+echo '✅✅✅✅ Looks good to me, I am pushing this now... ✅✅✅✅'
