@@ -24,7 +24,7 @@ In the last few years, the entire planet has been deeply affected by the covid-1
 
 At ActNow, our mission is to promote healthy interactions between people by providing a massive events platform that's able to help individuals find others with similar interests through our interactive maps.
 
-Our software is open-source and we are always trying to improve it. This website will serve as a guide on how our software works and how you will be able to contribute.
+Our software is open-source and we are always trying to improve it. Our docs webiste below will serve as a guide on how our software works and how you will be able to contribute.
 
 Thank you for visiting! 😀
 
