@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:location/location.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'personal_info.dart';
 
@@ -241,9 +242,6 @@ class ProfilePageState extends State<ProfilePage> {
                       })
                     ],
                   ),
-                  const DataRow(
-                    cells: <DataCell>[DataCell(Text('Notifcations'))],
-                  ),
                   DataRow(
                     cells: <DataCell>[
                       DataCell(
@@ -282,11 +280,30 @@ class ProfilePageState extends State<ProfilePage> {
                   ),
                 ],
                 rows: <DataRow>[
-                  const DataRow(
-                    cells: <DataCell>[DataCell(Text('How to use ActNow'))],
+                  DataRow(
+                    cells: <DataCell>[
+                      DataCell(const Text('Documentation'), onTap: () async {
+                        const url = 'https://act-now.netlify.app/';
+                        if (await canLaunch(url)) {
+                          await launch(url);
+                        } else {
+                          throw 'Could not launch $url';
+                        }
+                      })
+                    ],
                   ),
-                  const DataRow(
-                    cells: <DataCell>[DataCell(Text('Terms of Service'))],
+                  DataRow(
+                    cells: <DataCell>[
+                      DataCell(const Text('Terms of Service'), onTap: () async {
+                        const url =
+                            'https://github.com/GDSCUTM-CommunityProjects/ActNow/blob/master/LICENSE';
+                        if (await canLaunch(url)) {
+                          await launch(url);
+                        } else {
+                          throw 'Could not launch $url';
+                        }
+                      })
+                    ],
                   ),
                   DataRow(
                     cells: <DataCell>[
