@@ -84,15 +84,27 @@ const scrapeCityEvents = async (city) => {
           parsedImgUrl = imgUrl.getAttribute('data-src');
         }
 
+        let lat = 0;
+        let lng = 0;
         if (eventLoc) {
-          const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${eventLoc.innerText}&key=AIzaSyCFm3jPZv8BgY7sXh5QS8X6WNpApmfD8OQ`);
-          const geoData = await response.json();
-          console.log(geoData);
-          const lat = geoData["results"]["geometry"]["location"]["lat"];
-          const lng = geoData["results"]["geometry"]["location"]["lng"];
-        } else {          // Else If no event location found then
-          const lat = NaN // Invalid location
-          const lng = NaN // Invalid location
+          try {
+            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${eventLoc.innerText}&key=AIzaSyCFm3jPZv8BgY7sXh5QS8X6WNpApmfD8OQ`);
+            const geoData = await response.json();
+            lat = await geoData.results[0].geometry.location.lat;
+            lng = await geoData.results[0].geometry.location.lng;
+          }
+          // if (geoData.results.length > 0) {
+            
+          // }
+          // else {
+          //   lat = NaN // Invalid location
+          //   lng = NaN // Invalid location
+          // }
+        // } else {          // Else If no event location found then
+          catch {
+            lat = NaN // Invalid location
+            lng = NaN // Invalid location
+          }
         }
 
         const newEvent = {
