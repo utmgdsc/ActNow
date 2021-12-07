@@ -7,7 +7,7 @@ admin.initializeApp();
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const lowercase = (string) => string.toLowerCase();
+const format_city = (string) => string.slice(0, 1).toUpperCase() + string.slice(1).toLowerCase();
 
 const scrapeCityEvents = async (city) => {
   let eventsArray = [];
@@ -30,8 +30,6 @@ const scrapeCityEvents = async (city) => {
     eventsArray = await page.evaluate(async () => {
       const events = [];
       for (let i = 1; i <= 60; i += 1) {
-        let parsedDate = '';
-        let parsedImgUrl = '';
 
         const eventTitle = document.querySelector(
           `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > a > h3 > div > div.eds-event-card__formatted-name--is-clamped.eds-event-card__formatted-name--is-clamped-three.eds-text-weight--heavy`,
@@ -72,6 +70,7 @@ const scrapeCityEvents = async (city) => {
             : parseInt(followers.innerText, 10);
         }
 
+        let parsedDate = '';
         if (eventDate) {
           if (eventDate.innerText.indexOf('+') !== -1) {
             parsedDate = eventDate.innerText.substring(0, eventDate.innerText.indexOf('+') - 1);
@@ -118,12 +117,8 @@ const scrapeCityEvents = async (city) => {
             longitude: lng
           },
           createdByName: organizedBy ? organizedBy.innerText : '',
-          imageUrl: parsedImgUrl,
-          description: eventUrl
-            ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
-              'href',
-            )}`
-            : ticketInfo,
+          imageUrl: imgUrl ? imgUrl.getAttribute('data-src') : '',
+          description: eventUrl ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute('href')}` : ticketInfo,
         };
 
         if (!(newEvent.title === '')) {
@@ -209,7 +204,7 @@ exports.scrapeEventGivenCity = functions
     let city = '';
     if (req.method === 'GET') {
       if (req.query.city && req.query.city.length !== 0) {
-        city = lowercase(req.query.city);
+        city = format_city(req.query.city);
         functions.logger.info('City: ' + city);
       } else {
         functions.logger.error('No city name provided');
