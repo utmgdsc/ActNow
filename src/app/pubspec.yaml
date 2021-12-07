@@ -49,6 +49,7 @@ dependencies:
   url_launcher: ^6.0.15
   flutter_linkify: ^5.0.2
   uuid: ^3.0.5
+  flutter_email_sender: ^5.0.2
 
 dev_dependencies:
   flutter_test:
