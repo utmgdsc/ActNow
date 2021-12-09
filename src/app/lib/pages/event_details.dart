@@ -156,7 +156,11 @@ class EventDetailsState extends State<EventDetails> {
     var spaceSplit = splitDate.split(" ");
     String formattedDate;
     String formattedTime;
-    if (commaSplit.length > 2) {
+    if(splitDate.contains("Today") || splitDate.contains("Tomorrow")) {
+      formattedDate = spaceSplit[0];
+      formattedTime = spaceSplit[2];
+    }
+    else if (commaSplit.length > 2) {
       formattedDate = commaSplit[0] +
           " " +
           commaSplit[1] +
