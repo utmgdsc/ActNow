@@ -92,17 +92,9 @@ const scrapeCityEvents = async (city) => {
             lat = await geoData.results[0].geometry.location.lat;
             lng = await geoData.results[0].geometry.location.lng;
           }
-          // if (geoData.results.length > 0) {
-            
-          // }
-          // else {
-          //   lat = NaN // Invalid location
-          //   lng = NaN // Invalid location
-          // }
-        // } else {          // Else If no event location found then
           catch {
-            lat = NaN // Invalid location
-            lng = NaN // Invalid location
+            lat = "" // Invalid location
+            lng = "" // Invalid location
           }
         }
 
