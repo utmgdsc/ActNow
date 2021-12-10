@@ -294,7 +294,7 @@ exports.deleteOutdatedUserEvents = functions
 
 exports.periodicRescraper = functions
   .runWith({
-    timeoutSeconds: 120,
+    timeoutSeconds: 300,
     memory: '2GB',
   })
   .https.onRequest(async (_, res) => {
