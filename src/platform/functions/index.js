@@ -130,7 +130,7 @@ const scrapeCityEvents = async (city) => {
     functions.logger.info(resolvedEventsLocations);
 
     resolvedEventsLocations.forEach((resolvedEventLocation, index) => {
-      if (resolvedEventLocation?.data?.status === 'OK') {
+      if (resolvedEventLocation && resolvedEventLocation.data.status === 'OK') {
         const locationData = resolvedEventLocation.data.results[0];
 
         const {
