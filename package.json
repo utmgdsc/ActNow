@@ -1,0 +1,21 @@
+{
+  "name": "actnow",
+  "version": "1.0.0",
+  "description": "We are a social media platform designed to make you look at your phone less.",
+  "scripts": {
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GDSCUTM-CommunityProjects/ActNow.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GDSCUTM-CommunityProjects/ActNow/issues"
+  },
+  "homepage": "https://github.com/GDSCUTM-CommunityProjects/ActNow#readme",
+  "devDependencies": {
+    "husky": "^7.0.4"
+  }
+}
