@@ -1,13 +1,13 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const { Cluster } = require('puppeteer-cluster');
-const { app } = require('firebase-admin');
+const axios = require('axios');
 
 admin.initializeApp();
 
 const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const format_city = (string) => string.slice(0, 1).toUpperCase() + string.slice(1).toLowerCase();
+const formatCity = (string) => string.toLowerCase();
 
 const scrapeCityEvents = async (city) => {
   let eventsArray = [];
@@ -27,10 +27,12 @@ const scrapeCityEvents = async (city) => {
     await page.goto(webpageUrl, { waitUntil: 'networkidle2' });
     await timeout(2000);
 
-    eventsArray = await page.evaluate(async () => {
+    const { api_key: API_KEY } = functions.config();
+
+    // eslint-disable-next-line no-shadow
+    eventsArray = await page.evaluate((API_KEY) => {
       const events = [];
       for (let i = 1; i <= 60; i += 1) {
-
         const eventTitle = document.querySelector(
           `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > a > h3 > div > div.eds-event-card__formatted-name--is-clamped.eds-event-card__formatted-name--is-clamped-three.eds-text-weight--heavy`,
         );
@@ -79,38 +81,35 @@ const scrapeCityEvents = async (city) => {
           }
         }
 
+        let parsedImgUrl = '';
         if (imgUrl) {
           parsedImgUrl = imgUrl.getAttribute('data-src');
         }
 
-        let lat = 0;
-        let lng = 0;
-        if (eventLoc) {
-          try {
-            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${eventLoc.innerText}&key=AIzaSyCFm3jPZv8BgY7sXh5QS8X6WNpApmfD8OQ`);
-            const geoData = await response.json();
-            lat = await geoData.results[0].geometry.location.lat;
-            lng = await geoData.results[0].geometry.location.lng;
-          }
-          catch {
-            lat = "" // Invalid location
-            lng = "" // Invalid location
-          }
+        let parsedAPIUrl = '';
+        if (eventUrl) {
+          const parsedLocationString = encodeURI(eventLoc.innerText);
+          parsedAPIUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${parsedLocationString}&key=${API_KEY}`;
         }
 
         const newEvent = {
+          locationAPIUrl: parsedAPIUrl,
           attendees: [],
           numAttendees,
           title: eventTitle ? eventTitle.innerText : '',
           dateTime: parsedDate,
           location: {
             address: eventLoc ? eventLoc.innerText : '',
-            latitude: lat,
-            longitude: lng
+            latitude: '',
+            longitude: '',
           },
           createdByName: organizedBy ? organizedBy.innerText : '',
-          imageUrl: imgUrl ? imgUrl.getAttribute('data-src') : '',
-          description: eventUrl ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute('href')}` : ticketInfo,
+          imageUrl: parsedImgUrl,
+          description: eventUrl
+            ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
+                'href',
+              )}`
+            : ticketInfo,
         };
 
         if (!(newEvent.title === '')) {
@@ -118,6 +117,36 @@ const scrapeCityEvents = async (city) => {
         }
       }
       return events;
+    }, API_KEY);
+
+    const eventsLocationPromises = [];
+
+    eventsArray.forEach(({ locationAPIUrl }) =>
+      eventsLocationPromises.push(axios(locationAPIUrl).catch((_) => {})),
+    );
+
+    const resolvedEventsLocations = await Promise.all(eventsLocationPromises);
+
+    functions.logger.info(resolvedEventsLocations);
+
+    resolvedEventsLocations.forEach((resolvedEventLocation, index) => {
+      if (resolvedEventLocation?.data?.status === 'OK') {
+        const locationData = resolvedEventLocation.data.results[0];
+
+        const {
+          geometry: {
+            location: { lat, lng },
+          },
+        } = locationData;
+
+        eventsArray[index].location.latitude = lat;
+        eventsArray[index].location.longitude = lng;
+      }
+    });
+
+    eventsArray.forEach((event) => {
+      // eslint-disable-next-line no-param-reassign
+      delete event.locationAPIUrl;
     });
 
     if (eventsArray.length === 0) {
@@ -196,7 +225,7 @@ exports.scrapeEventGivenCity = functions
     let city = '';
     if (req.method === 'GET') {
       if (req.query.city && req.query.city.length !== 0) {
-        city = format_city(req.query.city);
+        city = formatCity(req.query.city);
         functions.logger.info('City: ' + city);
       } else {
         functions.logger.error('No city name provided');
