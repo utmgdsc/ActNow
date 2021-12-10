@@ -27,7 +27,9 @@ const scrapeCityEvents = async (city) => {
     await page.goto(webpageUrl, { waitUntil: 'networkidle2' });
     await timeout(2000);
 
-    const { api_key: API_KEY } = functions.config();
+    const {
+      geocoding: { api_key: API_KEY },
+    } = functions.config();
 
     // eslint-disable-next-line no-shadow
     eventsArray = await page.evaluate((API_KEY) => {
