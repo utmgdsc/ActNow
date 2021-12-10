@@ -156,11 +156,10 @@ class EventDetailsState extends State<EventDetails> {
     var spaceSplit = splitDate.split(" ");
     String formattedDate;
     String formattedTime;
-    if(splitDate.contains("Today") || splitDate.contains("Tomorrow")) {
+    if (splitDate.contains("Today") || splitDate.contains("Tomorrow")) {
       formattedDate = spaceSplit[0];
       formattedTime = spaceSplit[2];
-    }
-    else if (commaSplit.length > 2) {
+    } else if (commaSplit.length > 2) {
       formattedDate = commaSplit[0] +
           " " +
           commaSplit[1] +
@@ -182,12 +181,18 @@ class EventDetailsState extends State<EventDetails> {
   }
 
   Map<String, String> formatLocation() {
-    var splitLocation = userInfo!["location"].toString().split(",");
+    var userAddress;
+    if (userInfo!["location"] is Map) {
+      userAddress = userInfo!["location"]["address"];
+    } else {
+      userAddress = userInfo!["location"];
+    }
+    var splitLocation = userAddress.toString().split(",");
     String formatMainLocation;
     String formatSubLocation;
     if (splitLocation.length <= 2) {
-      formatMainLocation = userInfo!["location"].toString().split("•")[0];
-      formatSubLocation = userInfo!["location"].toString().split("•")[1];
+      formatMainLocation = userAddress.toString().split("•")[0];
+      formatSubLocation = userAddress.toString().split("•")[1];
     } else if (splitLocation.length < 4) {
       formatMainLocation = splitLocation[0];
       formatSubLocation = splitLocation[0].split(" ")[1] +
