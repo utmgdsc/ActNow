@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_geocoding/google_geocoding.dart' as google_geocoding;
-import 'package:location/location.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'event_details.dart';
@@ -34,8 +33,12 @@ class LocalEventDetails {
 class ExplorePage extends StatefulWidget {
   final User? userCreds;
   final dynamic userLocation;
+  final FirebaseFirestore? firestore;
   const ExplorePage(
-      {Key? key, required this.userCreds, required this.userLocation})
+      {Key? key,
+      required this.userCreds,
+      required this.userLocation,
+      this.firestore})
       : super(key: key);
 
   @override
@@ -65,7 +68,14 @@ class ExplorePageState extends State<ExplorePage> {
   var saved_list;
 
   Future<void> updateInfo() async {
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    late FirebaseFirestore firestore;
+
+    if (widget.firestore == null) {
+      firestore = FirebaseFirestore.instance;
+    } else {
+      firestore = widget.firestore!;
+    }
+
     await firestore
         .collection('users')
         .doc(widget.userCreds!.uid)
@@ -78,7 +88,14 @@ class ExplorePageState extends State<ExplorePage> {
   }
 
   Future<List<LocalEventDetails>> getEventData() async {
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    late FirebaseFirestore firestore;
+
+    if (widget.firestore == null) {
+      firestore = FirebaseFirestore.instance;
+    } else {
+      firestore = widget.firestore!;
+    }
+
     late google_geocoding.GoogleGeocoding googleGeocoding;
     String? city;
 
@@ -248,7 +265,15 @@ class ExplorePageState extends State<ExplorePage> {
       saved_list.add(event_id);
     }
 
-    FirebaseFirestore.instance
+    late FirebaseFirestore firestore;
+
+    if (widget.firestore == null) {
+      firestore = FirebaseFirestore.instance;
+    } else {
+      firestore = widget.firestore!;
+    }
+
+    firestore
         .collection('users')
         .doc(widget.userCreds!.uid)
         .update({'saved_events': saved_list});
