@@ -42,8 +42,8 @@ class MockGoogleGeocoding {
 }
 
 void main() {
-  late final User? user;
-  late final FirebaseFirestore? firestore;
+  User? user;
+  FirebaseFirestore? firestore;
 
   signIn() async {
     // Mock sign in with Google.
@@ -88,7 +88,7 @@ void main() {
         .add({
       "attendees": [],
       "createdBy": userUid,
-      "createdByName": userDisplayName,
+      "createdByName": "Bob",
       "dateTime": "Sunday, 28 Nov 2021 10:08 PM EST",
       "description": "test custom event description",
       "imageUrl":
@@ -108,14 +108,14 @@ void main() {
         .add({
       "attendees": [],
       "createdBy": userUid,
-      "createdByName": userDisplayName,
+      "createdByName": "Dan",
       "dateTime": "Saturday, 27 Nov 2021 10:08 PM EST",
       "description": "test scraped event desecription",
       "imageUrl":
           "https://www.pixsy.com/wp-content/uploads/2021/04/ben-sweet-2LowviVHZ-E-unsplash-1.jpeg",
       "latitude": 43.550063228477036,
       "longtitude": -79.66152995824812,
-      "numAttendees": 0,
+      "numAttendees": 90,
       "title": "test scraped event",
       "location": "70 Kimborough Hollow, Brampton, ON L6Y 0Z2, Canada",
     });
@@ -151,6 +151,34 @@ void main() {
       // assert
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(find.text('test custom event'), findsOneWidget);
+      expect(find.text('Sunday, 28 Nov 2021 10:08 PM EST'), findsOneWidget);
+      expect(find.text("Posted by Bob"), findsOneWidget);
+      expect(find.text("+ 0 attendees"), findsOneWidget);
+    });
+  });
+
+  testWidgets('show scraped event info', (WidgetTester tester) async {
+    mockNetworkImages(() async {
+      await tester.pumpWidget(
+        MaterialApp(
+            title: 'Explore Page',
+            home: ExplorePage(
+              userCreds: user,
+              userLocation: const LatLng(43.55103829955488, -79.66262838104547),
+              mockFirestore: firestore,
+              mockGoogleGeocoding: MockGoogleGeocoding(),
+            )),
+      );
+
+      // wait until loading stops
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('test scraped event'), findsOneWidget);
+      expect(find.text('Saturday, 27 Nov 2021 10:08 PM EST'), findsOneWidget);
+      expect(find.text("Posted by Dan"), findsOneWidget);
+      expect(find.text("+ 90 attendees"), findsOneWidget);
     });
   });
 }
