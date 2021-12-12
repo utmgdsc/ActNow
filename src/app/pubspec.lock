@@ -170,7 +170,7 @@ packages:
     source: hosted
     version: "1.2.0"
   fake_cloud_firestore:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: fake_cloud_firestore
       url: "https://pub.dartlang.org"
@@ -191,7 +191,7 @@ packages:
     source: hosted
     version: "3.3.0"
   firebase_auth_mocks:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: firebase_auth_mocks
       url: "https://pub.dartlang.org"
@@ -374,7 +374,7 @@ packages:
     source: hosted
     version: "5.2.1"
   google_sign_in_mocks:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: google_sign_in_mocks
       url: "https://pub.dartlang.org"
@@ -506,6 +506,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "5.0.16"
+  network_image_mock:
+    dependency: "direct dev"
+    description:
+      name: network_image_mock
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.1"
   package_config:
     dependency: transitive
     description:

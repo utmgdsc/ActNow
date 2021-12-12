@@ -5,18 +5,45 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:google_sign_in_mocks/google_sign_in_mocks.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_geocoding/google_geocoding.dart';
 
-import '../lib/pages/explore_page.dart';
+import 'package:actnow/pages/explore_page.dart';
+import 'mock_network_image.dart';
 
 const eventsCollection = 'events';
-const customEventsDoc = 'docs';
-const scrapedEventsDoc = 'scraped_events';
+const customEventsDoc = 'custom';
+const scrapedEventsDoc = 'scraped-events';
 const userDisplayName = 'test_user';
 const userUid = 'test_uid';
 const userEmail = 'test@gmail.com';
 
+class FormattedAddress {
+  String formattedAddress =
+      "3359 Mississauga Rd, Mississauga, ON L5L 1C6, Canada";
+}
+
+class Results {
+  List<FormattedAddress> results = [FormattedAddress()];
+}
+
+class Geocoding {
+  Future<Results> getReverse(LatLon _) async {
+    return Results();
+  }
+}
+
+class MockGoogleGeocoding {
+  late Geocoding geocoding;
+
+  MockGoogleGeocoding() {
+    geocoding = Geocoding();
+  }
+}
+
 void main() {
   late final User? user;
+  late final FirebaseFirestore? firestore;
 
   signIn() async {
     // Mock sign in with Google.
@@ -39,43 +66,91 @@ void main() {
     user = result.user;
   }
 
+  setupFirestore() async {
+    // Populate the fake database.
+    firestore = FakeFirebaseFirestore();
+
+    // user info
+    await firestore!.collection("users").doc(userUid).set({
+      "firstName": "tester",
+      "lastName": "test",
+      "isSwtiched": false,
+      "saved_events": [],
+      "user_id": userUid,
+      "username": userDisplayName
+    });
+
+    // custom events
+    await firestore!
+        .collection(eventsCollection)
+        .doc(customEventsDoc)
+        .collection("mississauga")
+        .add({
+      "attendees": [],
+      "createdBy": userUid,
+      "createdByName": userDisplayName,
+      "dateTime": "Sunday, 28 Nov 2021 10:08 PM EST",
+      "description": "test custom event description",
+      "imageUrl":
+          "https://www.pixsy.com/wp-content/uploads/2021/04/ben-sweet-2LowviVHZ-E-unsplash-1.jpeg",
+      "latitude": 43.550063228477036,
+      "longtitude": -79.66152995824812,
+      "numAttendees": 0,
+      "title": "test custom event",
+      "location": "65 Kimborough Hollow, Brampton, ON L6Y 0Z2, Canada",
+    });
+
+    // scraped events
+    await firestore!
+        .collection(eventsCollection)
+        .doc(scrapedEventsDoc)
+        .collection("mississauga")
+        .add({
+      "attendees": [],
+      "createdBy": userUid,
+      "createdByName": userDisplayName,
+      "dateTime": "Saturday, 27 Nov 2021 10:08 PM EST",
+      "description": "test scraped event desecription",
+      "imageUrl":
+          "https://www.pixsy.com/wp-content/uploads/2021/04/ben-sweet-2LowviVHZ-E-unsplash-1.jpeg",
+      "latitude": 43.550063228477036,
+      "longtitude": -79.66152995824812,
+      "numAttendees": 0,
+      "title": "test scraped event",
+      "location": "70 Kimborough Hollow, Brampton, ON L6Y 0Z2, Canada",
+    });
+  }
+
   setUp(() async {
     await signIn();
+    await setupFirestore();
   });
 
-  test(
-      "setup should have retuned correct user information (displayNamm, email, uid)",
-      () {
+  test("setup should return correct user info (displayNamm, email, uid)", () {
     expect(user?.displayName, userDisplayName);
     expect(user?.email, userEmail);
     expect(user?.uid, userUid);
   });
 
-  testWidgets('show custom and scraped events', (WidgetTester tester) async {
-    // Populate the fake database.
-    final firestore = FakeFirebaseFirestore();
-    await firestore
-        .collection(eventsCollection)
-        .doc(customEventsDoc)
-        .collection("mississauga")
-        .add({
-      "createdBy": userUid,
-      "createdByName": userDisplayName,
-    });
+  testWidgets('show custom event info', (WidgetTester tester) async {
+    mockNetworkImages(() async {
+      await tester.pumpWidget(
+        MaterialApp(
+            title: 'Explore Page',
+            home: ExplorePage(
+              userCreds: user,
+              userLocation: const LatLng(43.55103829955488, -79.66262838104547),
+              mockFirestore: firestore,
+              mockGoogleGeocoding: MockGoogleGeocoding(),
+            )),
+      );
 
-    // Render the widget.
-    await tester.pumpWidget(MaterialApp(
-      title: 'Explore Page',
-      home: ExplorePage(
-          userCreds: user,
-          userLocation: const LatLng(43.55103829955488, -79.66262838104547)),
-    ));
-    // Let the snapshots stream fire a snapshot.
-    await tester.idle();
-    // Re-render.
-    await tester.pump();
-    // // Verify the output.
-    // expect(find.text('Hello world!'), findsOneWidget);
-    // expect(find.text('Message 1 of 1'), findsOneWidget);
+      // wait until loading stops
+      await tester.pumpAndSettle();
+
+      // assert
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('test custom event'), findsOneWidget);
+    });
   });
 }

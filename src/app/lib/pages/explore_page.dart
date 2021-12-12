@@ -33,12 +33,14 @@ class LocalEventDetails {
 class ExplorePage extends StatefulWidget {
   final User? userCreds;
   final dynamic userLocation;
-  final FirebaseFirestore? firestore;
+  final FirebaseFirestore? mockFirestore;
+  final dynamic mockGoogleGeocoding;
   const ExplorePage(
       {Key? key,
       required this.userCreds,
       required this.userLocation,
-      this.firestore})
+      this.mockFirestore,
+      this.mockGoogleGeocoding})
       : super(key: key);
 
   @override
@@ -70,10 +72,10 @@ class ExplorePageState extends State<ExplorePage> {
   Future<void> updateInfo() async {
     late FirebaseFirestore firestore;
 
-    if (widget.firestore == null) {
+    if (widget.mockFirestore == null) {
       firestore = FirebaseFirestore.instance;
     } else {
-      firestore = widget.firestore!;
+      firestore = widget.mockFirestore!;
     }
 
     await firestore
@@ -90,16 +92,18 @@ class ExplorePageState extends State<ExplorePage> {
   Future<List<LocalEventDetails>> getEventData() async {
     late FirebaseFirestore firestore;
 
-    if (widget.firestore == null) {
+    if (widget.mockFirestore == null) {
       firestore = FirebaseFirestore.instance;
     } else {
-      firestore = widget.firestore!;
+      firestore = widget.mockFirestore!;
     }
 
-    late google_geocoding.GoogleGeocoding googleGeocoding;
+    late dynamic googleGeocoding;
     String? city;
 
-    if (Platform.isAndroid) {
+    if (widget.mockGoogleGeocoding != null) {
+      googleGeocoding = widget.mockGoogleGeocoding;
+    } else if (Platform.isAndroid) {
       googleGeocoding =
           google_geocoding.GoogleGeocoding(dotenv.env["API_KEY_ANDRIOD"]!);
     } else if (Platform.isIOS) {
@@ -124,7 +128,7 @@ class ExplorePageState extends State<ExplorePage> {
 
     city = city.toLowerCase();
 
-    CollectionReference<Map<String, dynamic>> events =
+    CollectionReference<Map<String, dynamic>> customEvents =
         firestore.collection('events').doc("custom").collection(city);
 
     CollectionReference<Map<String, dynamic>> scrapedEvents =
@@ -133,7 +137,7 @@ class ExplorePageState extends State<ExplorePage> {
     await updateInfo();
 
     List<LocalEventDetails> eventsList = <LocalEventDetails>[];
-    await events.get().then((value) => {
+    await customEvents.get().then((value) => {
           value.docs.forEach((element) async {
             bool is_saved = saved_list.contains(element.id);
             eventsList.add(LocalEventDetails(
@@ -143,7 +147,7 @@ class ExplorePageState extends State<ExplorePage> {
                 date_time: element['dateTime'],
                 creator: element['createdByName'],
                 id: element.id,
-                ref: events,
+                ref: customEvents,
                 saved: is_saved));
           })
         });
@@ -267,10 +271,10 @@ class ExplorePageState extends State<ExplorePage> {
 
     late FirebaseFirestore firestore;
 
-    if (widget.firestore == null) {
+    if (widget.mockFirestore == null) {
       firestore = FirebaseFirestore.instance;
     } else {
-      firestore = widget.firestore!;
+      firestore = widget.mockFirestore!;
     }
 
     firestore
