@@ -8,7 +8,7 @@
    <a href="https://app.netlify.com/sites/act-now/deploys">
     <img alt="Build Status" src="https://api.netlify.com/api/v1/badges/1762c5e5-df26-4f3d-9456-cd1a96cb587b/deploy-status">
   </a>
-  <a href="https://github.com/UTM-Hacklab/VIAplanner/blob/master/LICENSE">
+  <a href="https://github.com/GDSCUTM-CommunityProjects/ActNow/blob/master/LICENSE">
     <img alt="License" src="https://img.shields.io/badge/license-MIT-green?style=flat">
   </a>
 </p>
