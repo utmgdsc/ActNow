@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_geocoding/google_geocoding.dart' as google_geocoding;
-import 'package:location/location.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'event_details.dart';
@@ -34,8 +33,14 @@ class LocalEventDetails {
 class ExplorePage extends StatefulWidget {
   final User? userCreds;
   final dynamic userLocation;
+  final FirebaseFirestore? mockFirestore;
+  final dynamic mockGoogleGeocoding;
   const ExplorePage(
-      {Key? key, required this.userCreds, required this.userLocation})
+      {Key? key,
+      required this.userCreds,
+      required this.userLocation,
+      this.mockFirestore,
+      this.mockGoogleGeocoding})
       : super(key: key);
 
   @override
@@ -65,7 +70,14 @@ class ExplorePageState extends State<ExplorePage> {
   var saved_list;
 
   Future<void> updateInfo() async {
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    late FirebaseFirestore firestore;
+
+    if (widget.mockFirestore == null) {
+      firestore = FirebaseFirestore.instance;
+    } else {
+      firestore = widget.mockFirestore!;
+    }
+
     await firestore
         .collection('users')
         .doc(widget.userCreds!.uid)
@@ -78,11 +90,20 @@ class ExplorePageState extends State<ExplorePage> {
   }
 
   Future<List<LocalEventDetails>> getEventData() async {
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    late google_geocoding.GoogleGeocoding googleGeocoding;
+    late FirebaseFirestore firestore;
+
+    if (widget.mockFirestore == null) {
+      firestore = FirebaseFirestore.instance;
+    } else {
+      firestore = widget.mockFirestore!;
+    }
+
+    late dynamic googleGeocoding;
     String? city;
 
-    if (Platform.isAndroid) {
+    if (widget.mockGoogleGeocoding != null) {
+      googleGeocoding = widget.mockGoogleGeocoding;
+    } else if (Platform.isAndroid) {
       googleGeocoding =
           google_geocoding.GoogleGeocoding(dotenv.env["API_KEY_ANDRIOD"]!);
     } else if (Platform.isIOS) {
@@ -107,7 +128,7 @@ class ExplorePageState extends State<ExplorePage> {
 
     city = city.toLowerCase();
 
-    CollectionReference<Map<String, dynamic>> events =
+    CollectionReference<Map<String, dynamic>> customEvents =
         firestore.collection('events').doc("custom").collection(city);
 
     CollectionReference<Map<String, dynamic>> scrapedEvents =
@@ -116,7 +137,7 @@ class ExplorePageState extends State<ExplorePage> {
     await updateInfo();
 
     List<LocalEventDetails> eventsList = <LocalEventDetails>[];
-    await events.get().then((value) => {
+    await customEvents.get().then((value) => {
           value.docs.forEach((element) async {
             bool is_saved = saved_list.contains(element.id);
             eventsList.add(LocalEventDetails(
@@ -126,7 +147,7 @@ class ExplorePageState extends State<ExplorePage> {
                 date_time: element['dateTime'],
                 creator: element['createdByName'],
                 id: element.id,
-                ref: events,
+                ref: customEvents,
                 saved: is_saved));
           })
         });
@@ -248,7 +269,15 @@ class ExplorePageState extends State<ExplorePage> {
       saved_list.add(event_id);
     }
 
-    FirebaseFirestore.instance
+    late FirebaseFirestore firestore;
+
+    if (widget.mockFirestore == null) {
+      firestore = FirebaseFirestore.instance;
+    } else {
+      firestore = widget.mockFirestore!;
+    }
+
+    firestore
         .collection('users')
         .doc(widget.userCreds!.uid)
         .update({'saved_events': saved_list});
