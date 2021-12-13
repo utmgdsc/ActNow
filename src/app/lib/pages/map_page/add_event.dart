@@ -15,12 +15,14 @@ class AddEvent extends StatefulWidget {
   final LatLng? droppedPin;
   final Map? formDetail;
   final String? updateEvent;
+  final String? imageUrl;
   const AddEvent(
       {Key? key,
       required this.userCreds,
       required this.droppedPin,
       required this.updateEvent,
-      this.formDetail})
+      this.formDetail,
+      this.imageUrl})
       : super(key: key);
 
   @override
@@ -28,7 +30,7 @@ class AddEvent extends StatefulWidget {
 }
 
 class AddEventState extends State<AddEvent> {
-  final String defaultImg = "https://www.colorhexa.com/bdbdbd.png";
+  late String defaultImg;
   final ImagePicker _picker = ImagePicker();
   XFile? _image;
   String? userAddress;
@@ -75,6 +77,7 @@ class AddEventState extends State<AddEvent> {
   void initState() {
     super.initState();
     dateControl = TextEditingController(text: widget.formDetail!["date"] ?? "");
+    defaultImg = widget.imageUrl ?? "https://www.colorhexa.com/bdbdbd.png";
     titleControl =
         TextEditingController(text: widget.formDetail!["title"] ?? "");
     descControl = TextEditingController(text: widget.formDetail!["desc"] ?? "");
@@ -131,7 +134,7 @@ class AddEventState extends State<AddEvent> {
     var ref = firestore
         .collection('events')
         .doc("custom")
-        .collection(userAddress!)
+        .collection(userAddress!.toLowerCase())
         .doc(widget.updateEvent);
 
     await ref.update({

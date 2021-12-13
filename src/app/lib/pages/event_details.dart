@@ -112,6 +112,7 @@ class EventDetailsState extends State<EventDetails> {
               droppedPin: LatLng(userInfo!["latitude"], userInfo!["longitude"]),
               updateEvent: widget.eventUid,
               formDetail: formDetails,
+              imageUrl: userInfo!["imageUrl"],
             ));
     Navigator.push(context, route).then((value) => setState(() {
           getUserInfo();
