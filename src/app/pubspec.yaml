@@ -15,7 +15,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.0+1
+version: 1.0.2
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -69,7 +69,7 @@ dev_dependencies:
 
 flutter_icons:
   android: true
-  image_path: assets/Logo.png
+  image_path: assets/android-logo.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -86,6 +86,7 @@ flutter:
     - .env
     - assets/Logo.png
     - assets/Icon.png
+    - assets/android-logo.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
