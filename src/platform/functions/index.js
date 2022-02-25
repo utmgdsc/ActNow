@@ -25,10 +25,10 @@ const scrapeCityEvents = async (city) => {
       height: 1080,
     });
 
-    await page.goto(webpageUrl, { waitUntil: 'networkidle2' });
-    await timeout(2000);
-
     const { API_KEY } = process.env;
+
+    await page.goto(webpageUrl, { waitUntil: 'networkidle0', timeout: 0 });
+    await page.waitForSelector('ul.search-main-content__events-list');
 
     // eslint-disable-next-line no-shadow
     eventsArray = await page.evaluate((API_KEY) => {
