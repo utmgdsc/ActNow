@@ -17,6 +17,7 @@ const scrapeCityEvents = async (city) => {
   const cluster = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
     maxConcurrency: 3,
+    timeout: 70000,
   });
 
   await cluster.task(async ({ page, data: webpageUrl }) => {
@@ -27,98 +28,117 @@ const scrapeCityEvents = async (city) => {
 
     const { API_KEY } = process.env;
 
-    await page.goto(webpageUrl, { waitUntil: 'networkidle0', timeout: 0 });
-    await page.waitForSelector('ul.search-main-content__events-list');
+    await page.goto(webpageUrl, { waitUntil: 'networkidle2', timeout: 0 });
 
-    // eslint-disable-next-line no-shadow
-    eventsArray = await page.evaluate((API_KEY) => {
-      const rawAllEvents = document
-        .getElementsByClassName('search-main-content__events-list')[0]
-        .querySelectorAll('li');
+    try {
+      await page.waitForSelector('ul.search-main-content__events-list', { timeout: 40000 });
+    } catch (error) {
+      functions.logger.error("couldn't get event list");
+      functions.logger.error(error);
+    }
 
-      const events = Array.from(rawAllEvents).map((rawEvent) => {
-        const eventTitle = rawEvent.querySelector('div.eds-event-card__formatted-name--is-clamped');
+    try {
+      // eslint-disable-next-line no-shadow
+      eventsArray = await page.evaluate((API_KEY) => {
+        const rawAllEvents = document
+          .getElementsByClassName('search-main-content__events-list')[0]
+          .querySelectorAll('li');
 
-        const eventDate = rawEvent.querySelector('div.eds-event-card-content__sub-title');
+        const events = Array.from(rawAllEvents).map((rawEvent) => {
+          const eventTitle = rawEvent.querySelector(
+            'div.eds-event-card__formatted-name--is-clamped',
+          );
 
-        const eventLoc = rawEvent.querySelector('div.card-text--truncated__one');
+          const eventDate = rawEvent.querySelector('div.eds-event-card-content__sub-title');
 
-        const cost = rawEvent.querySelectorAll(
-          'div.eds-event-card-content__sub.eds-text-bm.eds-text-color--ui-600.eds-l-mar-top-1',
-        )[1];
+          const eventLoc = rawEvent.querySelector('div.card-text--truncated__one');
 
-        const organizedBy = rawEvent.querySelector('div.eds-event-card__sub-content--organizer');
+          const cost = rawEvent.querySelectorAll(
+            'div.eds-event-card-content__sub.eds-text-bm.eds-text-color--ui-600.eds-l-mar-top-1',
+          )[1];
 
-        const imgUrl = rawEvent.querySelector('img.eds-event-card-content__image');
+          const organizedBy = rawEvent.querySelector('div.eds-event-card__sub-content--organizer');
 
-        const eventUrl = rawEvent.querySelector('a');
+          const imgUrl = rawEvent.querySelector('img.eds-event-card-content__image');
 
-        const followers = rawEvent.querySelector(
-          'div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy',
-        );
+          const eventUrl = rawEvent.querySelector('a');
 
-        let ticketInfo = cost ? cost.innerText : '';
-        if (ticketInfo.substring(0, 4) === 'Free' || ticketInfo.substring(0, 9) === 'Starts at') {
-          ticketInfo = `Registration Cost: ${ticketInfo}. `;
-        } else {
-          ticketInfo = '';
-        }
+          const followers = rawEvent.querySelector(
+            'div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy',
+          );
 
-        let numAttendees = 0;
-        if (followers && followers.childNodes) {
-          const followerNodeValue = followers.childNodes[3].nodeValue;
-
-          numAttendees = followerNodeValue.includes('k')
-            ? parseInt(parseFloat(followerNodeValue) * 1000, 10)
-            : parseInt(followerNodeValue, 10);
-        }
-
-        let parsedDate = '';
-        if (eventDate) {
-          if (eventDate.innerText.indexOf('+') !== -1) {
-            parsedDate = eventDate.innerText.substring(0, eventDate.innerText.indexOf('+') - 1);
+          let ticketInfo = cost ? cost.innerText : '';
+          if (ticketInfo.substring(0, 4) === 'Free' || ticketInfo.substring(0, 9) === 'Starts at') {
+            ticketInfo = `Registration Cost: ${ticketInfo}. `;
           } else {
-            parsedDate = eventDate.innerText;
+            ticketInfo = '';
           }
-        }
 
-        const parsedImgUrl = imgUrl && imgUrl.src ? imgUrl.src : '';
+          let numAttendees = 0;
+          if (followers && followers.childNodes) {
+            const followerNodeValue = followers.childNodes[3].nodeValue;
 
-        let parsedAPIUrl = '';
-        if (eventUrl) {
-          const parsedLocationString = encodeURI(eventLoc.innerText);
-          parsedAPIUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${parsedLocationString}&key=${API_KEY}`;
-        }
+            numAttendees = followerNodeValue.includes('k')
+              ? parseInt(parseFloat(followerNodeValue) * 1000, 10)
+              : parseInt(followerNodeValue, 10);
+          }
 
-        return {
-          locationAPIUrl: parsedAPIUrl,
-          attendees: [],
-          numAttendees,
-          title: eventTitle.innerText || '',
-          dateTime: parsedDate,
-          location: {
-            address: eventLoc.innerText || '',
-            latitude: '',
-            longitude: '',
-          },
-          createdByName: organizedBy ? organizedBy.innerText : '',
-          imageUrl: parsedImgUrl,
-          description: eventUrl
-            ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.href}`
-            : ticketInfo,
-        };
-      });
+          let parsedDate = '';
+          if (eventDate) {
+            if (eventDate.innerText.indexOf('+') !== -1) {
+              parsedDate = eventDate.innerText.substring(0, eventDate.innerText.indexOf('+') - 1);
+            } else {
+              parsedDate = eventDate.innerText;
+            }
+          }
 
-      return events;
-    }, API_KEY);
+          const parsedImgUrl = imgUrl && imgUrl.src ? imgUrl.src : '';
+
+          let parsedAPIUrl = '';
+          if (eventUrl) {
+            const parsedLocationString = encodeURI(eventLoc.innerText);
+            parsedAPIUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${parsedLocationString}&key=${API_KEY}`;
+          }
+
+          return {
+            locationAPIUrl: parsedAPIUrl,
+            attendees: [],
+            numAttendees,
+            title: eventTitle.innerText || '',
+            dateTime: parsedDate,
+            location: {
+              address: eventLoc.innerText || '',
+              latitude: '',
+              longitude: '',
+            },
+            createdByName: organizedBy ? organizedBy.innerText : '',
+            imageUrl: parsedImgUrl,
+            description: eventUrl
+              ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.href}`
+              : ticketInfo,
+          };
+        });
+
+        return events;
+      }, API_KEY);
+    } catch (error) {
+      functions.logger.error(error);
+    }
 
     const eventsLocationPromises = [];
 
     eventsArray.forEach(({ locationAPIUrl }) =>
-      eventsLocationPromises.push(axios(locationAPIUrl).catch((_) => {})),
+      eventsLocationPromises.push(
+        axios(locationAPIUrl).catch((error) => functions.logger.error(error)),
+      ),
     );
 
-    const resolvedEventsLocations = await Promise.all(eventsLocationPromises);
+    let resolvedEventsLocations = [];
+    try {
+      resolvedEventsLocations = await Promise.all(eventsLocationPromises);
+    } catch (error) {
+      functions.logger.error(error);
+    }
 
     resolvedEventsLocations.forEach((resolvedEventLocation, index) => {
       if (resolvedEventLocation && resolvedEventLocation.data.status === 'OK') {
@@ -152,14 +172,18 @@ const scrapeCityEvents = async (city) => {
     return eventsArray;
   });
 
-  collectiveEventsArray = await Promise.all([
-    cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=1`),
-    cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=2`),
-    cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=3`),
-  ]);
+  try {
+    collectiveEventsArray = await Promise.all([
+      cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=1`),
+      cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=2`),
+      cluster.execute(`https://www.eventbrite.ca/d/${city}/all-events/?page=3`),
+    ]);
 
-  await cluster.idle();
-  await cluster.close();
+    await cluster.idle();
+    await cluster.close();
+  } catch (error) {
+    functions.logger.error(error);
+  }
 
   // many more page
   functions.logger.info('starting upload');
