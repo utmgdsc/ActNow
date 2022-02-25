@@ -1,3 +1,4 @@
+require('dotenv').config();
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const { Cluster } = require('puppeteer-cluster');
@@ -27,37 +28,33 @@ const scrapeCityEvents = async (city) => {
     await page.goto(webpageUrl, { waitUntil: 'networkidle2' });
     await timeout(2000);
 
-    const {
-      geocoding: { api_key: API_KEY },
-    } = functions.config();
+    const { API_KEY } = process.env;
 
     // eslint-disable-next-line no-shadow
     eventsArray = await page.evaluate((API_KEY) => {
-      const events = [];
-      for (let i = 1; i <= 60; i += 1) {
-        const eventTitle = document.querySelector(
-          `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > a > h3 > div > div.eds-event-card__formatted-name--is-clamped.eds-event-card__formatted-name--is-clamped-three.eds-text-weight--heavy`,
-        );
-        const eventDate = document.querySelector(
-          `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > div`,
-        );
-        const eventLoc = document.querySelector(
-          `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__sub-content > div:nth-child(1) > div`,
-        );
-        const cost = document.querySelector(
-          `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__sub-content > div:nth-child(2)`,
-        );
-        const organizedBy = document.querySelector(
-          `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__sub-content > div:nth-child(3) > div > div.eds-event-card__sub-content--organizer.eds-text-color--ui-800.eds-text-weight--heavy.card-text--truncated__two`,
-        );
-        const imgUrl = document.querySelector(
-          `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.image-action-container > aside > a > div > div > img`,
-        );
-        const eventUrl = document.querySelector(
-          `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__primary-content > a`,
-        );
-        const followers = document.querySelector(
-          `#root > div > div.eds-structure__body > div > div > div > div.eds-fixed-bottom-bar-layout__content > div > main > div > div > section.search-base-screen__search-panel > div.search-results-panel-content > div > ul > li:nth-child(${i.toString()}) > div > div > div.search-event-card-rectangle-image > div > div > div > article > div.eds-event-card-content__content-container.eds-l-pad-right-4 > div > div > div.eds-event-card-content__sub-content > div:nth-child(3) > div > div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy`,
+      const rawAllEvents = document
+        .getElementsByClassName('search-main-content__events-list')[0]
+        .querySelectorAll('li');
+
+      const events = Array.from(rawAllEvents).map((rawEvent) => {
+        const eventTitle = rawEvent.querySelector('div.eds-event-card__formatted-name--is-clamped');
+
+        const eventDate = rawEvent.querySelector('div.eds-event-card-content__sub-title');
+
+        const eventLoc = rawEvent.querySelector('div.card-text--truncated__one');
+
+        const cost = rawEvent.querySelectorAll(
+          'div.eds-event-card-content__sub.eds-text-bm.eds-text-color--ui-600.eds-l-mar-top-1',
+        )[1];
+
+        const organizedBy = rawEvent.querySelector('div.eds-event-card__sub-content--organizer');
+
+        const imgUrl = rawEvent.querySelector('img.eds-event-card-content__image');
+
+        const eventUrl = rawEvent.querySelector('a');
+
+        const followers = rawEvent.querySelector(
+          'div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy',
         );
 
         let ticketInfo = cost ? cost.innerText : '';
@@ -68,10 +65,12 @@ const scrapeCityEvents = async (city) => {
         }
 
         let numAttendees = 0;
-        if (followers && followers.innerText) {
-          numAttendees = followers.innerText.includes('k')
-            ? parseInt(parseFloat(followers.innerText) * 1000, 10)
-            : parseInt(followers.innerText, 10);
+        if (followers && followers.childNodes) {
+          const followerNodeValue = followers.childNodes[3].nodeValue;
+
+          numAttendees = followerNodeValue.includes('k')
+            ? parseInt(parseFloat(followerNodeValue) * 1000, 10)
+            : parseInt(followerNodeValue, 10);
         }
 
         let parsedDate = '';
@@ -83,10 +82,7 @@ const scrapeCityEvents = async (city) => {
           }
         }
 
-        let parsedImgUrl = '';
-        if (imgUrl) {
-          parsedImgUrl = imgUrl.getAttribute('data-src');
-        }
+        const parsedImgUrl = imgUrl && imgUrl.src ? imgUrl.src : '';
 
         let parsedAPIUrl = '';
         if (eventUrl) {
@@ -94,30 +90,25 @@ const scrapeCityEvents = async (city) => {
           parsedAPIUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${parsedLocationString}&key=${API_KEY}`;
         }
 
-        const newEvent = {
+        return {
           locationAPIUrl: parsedAPIUrl,
           attendees: [],
           numAttendees,
-          title: eventTitle ? eventTitle.innerText : '',
+          title: eventTitle.innerText || '',
           dateTime: parsedDate,
           location: {
-            address: eventLoc ? eventLoc.innerText : '',
+            address: eventLoc.innerText || '',
             latitude: '',
             longitude: '',
           },
           createdByName: organizedBy ? organizedBy.innerText : '',
           imageUrl: parsedImgUrl,
           description: eventUrl
-            ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.getAttribute(
-                'href',
-              )}`
+            ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.href}`
             : ticketInfo,
         };
+      });
 
-        if (!(newEvent.title === '')) {
-          events.push(newEvent);
-        }
-      }
       return events;
     }, API_KEY);
 
@@ -129,11 +120,11 @@ const scrapeCityEvents = async (city) => {
 
     const resolvedEventsLocations = await Promise.all(eventsLocationPromises);
 
-    functions.logger.info(resolvedEventsLocations);
-
     resolvedEventsLocations.forEach((resolvedEventLocation, index) => {
       if (resolvedEventLocation && resolvedEventLocation.data.status === 'OK') {
         const locationData = resolvedEventLocation.data.results[0];
+
+        functions.logger.info(locationData);
 
         const {
           geometry: {
@@ -143,6 +134,8 @@ const scrapeCityEvents = async (city) => {
 
         eventsArray[index].location.latitude = lat;
         eventsArray[index].location.longitude = lng;
+      } else {
+        functions.logger.info(resolvedEventLocation.data.error_message);
       }
     });
 
