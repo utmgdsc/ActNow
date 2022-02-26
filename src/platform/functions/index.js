@@ -6,8 +6,6 @@ const axios = require('axios');
 
 admin.initializeApp();
 
-const timeout = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 const formatCity = (string) => string.toLowerCase();
 
 const scrapeCityEvents = async (city) => {
@@ -30,100 +28,89 @@ const scrapeCityEvents = async (city) => {
 
     await page.goto(webpageUrl, { waitUntil: 'networkidle2', timeout: 0 });
 
-    try {
-      await page.waitForSelector('ul.search-main-content__events-list', { timeout: 40000 });
-    } catch (error) {
-      functions.logger.error("couldn't get event list");
-      functions.logger.error(error);
-    }
+    await page.waitForSelector('ul.search-main-content__events-list', { timeout: 40000 });
 
-    try {
-      // eslint-disable-next-line no-shadow
-      eventsArray = await page.evaluate((API_KEY) => {
-        const rawAllEvents = document
-          .getElementsByClassName('search-main-content__events-list')[0]
-          .querySelectorAll('li');
+    // eslint-disable-next-line no-shadow
+    eventsArray = await page.evaluate((API_KEY) => {
+      const rawAllEvents = document
+        .getElementsByClassName('search-main-content__events-list')[0]
+        .querySelectorAll('li');
 
-        const events = Array.from(rawAllEvents).map((rawEvent) => {
-          const eventTitle = rawEvent.querySelector(
-            'div.eds-event-card__formatted-name--is-clamped',
-          );
+      const events = Array.from(rawAllEvents).map((rawEvent) => {
+        const eventTitle = rawEvent.querySelector('div.eds-event-card__formatted-name--is-clamped');
 
-          const eventDate = rawEvent.querySelector('div.eds-event-card-content__sub-title');
+        const eventDate = rawEvent.querySelector('div.eds-event-card-content__sub-title');
 
-          const eventLoc = rawEvent.querySelector('div.card-text--truncated__one');
+        const eventLoc = rawEvent.querySelector('div.card-text--truncated__one');
 
-          const cost = rawEvent.querySelectorAll(
-            'div.eds-event-card-content__sub.eds-text-bm.eds-text-color--ui-600.eds-l-mar-top-1',
-          )[1];
+        const cost = rawEvent.querySelectorAll(
+          'div.eds-event-card-content__sub.eds-text-bm.eds-text-color--ui-600.eds-l-mar-top-1',
+        )[1];
 
-          const organizedBy = rawEvent.querySelector('div.eds-event-card__sub-content--organizer');
+        const organizedBy = rawEvent.querySelector('div.eds-event-card__sub-content--organizer');
 
-          const imgUrl = rawEvent.querySelector('img.eds-event-card-content__image');
+        const imgUrl = rawEvent.querySelector('img.eds-event-card-content__image');
 
-          const eventUrl = rawEvent.querySelector('a');
+        const eventUrl = rawEvent.querySelector('a');
 
-          const followers = rawEvent.querySelector(
-            'div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy',
-          );
+        const followers = rawEvent.querySelector(
+          'div.eds-event-card__sub-content--signal.eds-text-color--ui-800.eds-text-weight--heavy',
+        );
 
-          let ticketInfo = cost ? cost.innerText : '';
-          if (ticketInfo.substring(0, 4) === 'Free' || ticketInfo.substring(0, 9) === 'Starts at') {
-            ticketInfo = `Registration Cost: ${ticketInfo}. `;
+        let ticketInfo = cost ? cost.innerText : '';
+        if (ticketInfo.substring(0, 4) === 'Free' || ticketInfo.substring(0, 9) === 'Starts at') {
+          ticketInfo = `Registration Cost: ${ticketInfo}. `;
+        } else {
+          ticketInfo = '';
+        }
+
+        let numAttendees = 0;
+        if (followers && followers.childNodes) {
+          const followerNodeValue = followers.childNodes[3].nodeValue;
+
+          numAttendees = followerNodeValue.includes('k')
+            ? parseInt(parseFloat(followerNodeValue) * 1000, 10)
+            : parseInt(followerNodeValue, 10);
+        }
+
+        let parsedDate = '';
+        if (eventDate) {
+          if (eventDate.innerText.indexOf('+') !== -1) {
+            parsedDate = eventDate.innerText.substring(0, eventDate.innerText.indexOf('+') - 1);
           } else {
-            ticketInfo = '';
+            parsedDate = eventDate.innerText;
           }
+        }
 
-          let numAttendees = 0;
-          if (followers && followers.childNodes) {
-            const followerNodeValue = followers.childNodes[3].nodeValue;
+        const parsedImgUrl = imgUrl && imgUrl.src ? imgUrl.src : '';
 
-            numAttendees = followerNodeValue.includes('k')
-              ? parseInt(parseFloat(followerNodeValue) * 1000, 10)
-              : parseInt(followerNodeValue, 10);
-          }
+        let parsedAPIUrl = '';
+        if (eventUrl) {
+          const parsedLocationString = encodeURI(eventLoc.innerText);
+          parsedAPIUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${parsedLocationString}&key=${API_KEY}`;
+        }
 
-          let parsedDate = '';
-          if (eventDate) {
-            if (eventDate.innerText.indexOf('+') !== -1) {
-              parsedDate = eventDate.innerText.substring(0, eventDate.innerText.indexOf('+') - 1);
-            } else {
-              parsedDate = eventDate.innerText;
-            }
-          }
+        return {
+          locationAPIUrl: parsedAPIUrl,
+          attendees: [],
+          numAttendees,
+          title: eventTitle.innerText || '',
+          dateTime: parsedDate,
+          location: {
+            address: eventLoc.innerText || '',
+            latitude: '',
+            longitude: '',
+          },
+          createdByName: organizedBy ? organizedBy.innerText : '',
+          imageUrl: parsedImgUrl,
+          description: eventUrl
+            ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.href}`
+            : ticketInfo,
+        };
+      });
 
-          const parsedImgUrl = imgUrl && imgUrl.src ? imgUrl.src : '';
-
-          let parsedAPIUrl = '';
-          if (eventUrl) {
-            const parsedLocationString = encodeURI(eventLoc.innerText);
-            parsedAPIUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${parsedLocationString}&key=${API_KEY}`;
-          }
-
-          return {
-            locationAPIUrl: parsedAPIUrl,
-            attendees: [],
-            numAttendees,
-            title: eventTitle.innerText || '',
-            dateTime: parsedDate,
-            location: {
-              address: eventLoc.innerText || '',
-              latitude: '',
-              longitude: '',
-            },
-            createdByName: organizedBy ? organizedBy.innerText : '',
-            imageUrl: parsedImgUrl,
-            description: eventUrl
-              ? `${ticketInfo}To register for the event go to the following link: ${eventUrl.href}`
-              : ticketInfo,
-          };
-        });
-
-        return events;
-      }, API_KEY);
-    } catch (error) {
-      functions.logger.error(error);
-    }
+      return events;
+    }, API_KEY);
 
     const eventsLocationPromises = [];
 
@@ -134,18 +121,11 @@ const scrapeCityEvents = async (city) => {
     );
 
     let resolvedEventsLocations = [];
-    try {
-      resolvedEventsLocations = await Promise.all(eventsLocationPromises);
-    } catch (error) {
-      functions.logger.error(error);
-    }
+    resolvedEventsLocations = await Promise.all(eventsLocationPromises);
 
     resolvedEventsLocations.forEach((resolvedEventLocation, index) => {
       if (resolvedEventLocation && resolvedEventLocation.data.status === 'OK') {
         const locationData = resolvedEventLocation.data.results[0];
-
-        functions.logger.info(locationData);
-
         const {
           geometry: {
             location: { lat, lng },
@@ -315,6 +295,11 @@ exports.periodicRescraper = functions
     memory: '2GB',
   })
   .https.onRequest(async (_, res) => {
+    const REGION = 'us-central1';
+    const PROJECT_ID = 'actnow-4b2f5';
+    const RECEIVING_FUNCTION = 'scrapeEventGivenCity';
+    const functionURL = `https://${REGION}-${PROJECT_ID}.cloudfunctions.net/${RECEIVING_FUNCTION}`;
+
     const timestamp = await admin
       .firestore()
       .collection('events')
@@ -324,11 +309,18 @@ exports.periodicRescraper = functions
 
     const sortedTimestamp = timestamp.docs
       .sort((a, b) => new Date(a.data().timestamp) - new Date(b.data().timestamp))
-      .map((doc) => doc.data());
+      .map((doc) => doc.data())
+      .slice(0, 10);
+
+    functions.logger.info(
+      `scraping: ${sortedTimestamp.map((currTimestamp) => currTimestamp.location)}`,
+    );
 
     const scrapePromises = [];
     sortedTimestamp.forEach((currTimestamp) =>
-      scrapePromises.push(scrapeCityEvents(currTimestamp.location)),
+      scrapePromises.push(
+        axios(`${functionURL}?city=${currTimestamp.location}`).catch((err) => functions.logger.error(err)),
+      ),
     );
 
     await Promise.all(scrapePromises);
