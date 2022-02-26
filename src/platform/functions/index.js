@@ -82,7 +82,10 @@ const scrapeCityEvents = async (city) => {
           }
         }
 
-        const parsedImgUrl = imgUrl && imgUrl.src ? imgUrl.src : '';
+        const parsedImgUrl =
+          imgUrl && imgUrl.getAttribute('data-src')
+            ? imgUrl.getAttribute('data-src')
+            : 'https://wp-rocket.me/wp-content/uploads/fly-images/1483304/placeholder-feature-image-490x205-c.png';
 
         let parsedAPIUrl = '';
         if (eventUrl) {
@@ -319,7 +322,9 @@ exports.periodicRescraper = functions
     const scrapePromises = [];
     sortedTimestamp.forEach((currTimestamp) =>
       scrapePromises.push(
-        axios(`${functionURL}?city=${currTimestamp.location}`).catch((err) => functions.logger.error(err)),
+        axios(`${functionURL}?city=${currTimestamp.location}`).catch((err) =>
+          functions.logger.error(err),
+        ),
       ),
     );
 
