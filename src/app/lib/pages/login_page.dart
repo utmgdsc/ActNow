@@ -1,11 +1,11 @@
-import 'package:actnow/signup_screen.dart';
+import 'package:actnow/pages/signup_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-import 'forgot_password_screen.dart';
-import 'signup_screen.dart';
+import 'forgot_password_page.dart';
+import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
   final Function(User?) onSignIn;

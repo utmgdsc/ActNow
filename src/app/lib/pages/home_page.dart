@@ -5,10 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:location/location.dart';
-import 'pages/profile_page/profile_page.dart';
-import 'pages/map_page/map_page.dart';
-import 'pages/explore_page.dart';
-import 'pages/saved_page.dart';
+import 'profile_page/profile_page.dart';
+import 'map_page/map_page.dart';
+import 'explore_page.dart';
+import 'saved_page.dart';
 
 class HomePage extends StatefulWidget {
   final User? userCreds;

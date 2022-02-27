@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_geocoding/google_geocoding.dart' as google_geocoding;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'event_details.dart';
+import 'event_details_page.dart';
 
 class LocalEventDetails {
   final String? img_location;

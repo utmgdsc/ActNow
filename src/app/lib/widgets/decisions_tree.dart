@@ -1,9 +1,9 @@
-import 'package:actnow/login_screen.dart';
+import 'package:actnow/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'login_screen.dart';
-import 'home_page.dart';
+import '../pages/login_page.dart';
+import '../pages/home_page.dart';
 
 class DecisionsTree extends StatefulWidget {
   const DecisionsTree({Key? key}) : super(key: key);

@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:actnow/pages/event_details.dart';
+import 'package:actnow/pages/event_details_page.dart';
 import 'package:actnow/pages/explore_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
