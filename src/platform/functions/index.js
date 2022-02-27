@@ -117,6 +117,9 @@ const scrapeCityEvents = async (city) => {
 
     const eventsLocationPromises = [];
 
+    // remove all event with no dates
+    eventsArray = eventsArray.filter((event) => event.dateTime !== '');
+
     eventsArray.forEach(({ locationAPIUrl }) =>
       eventsLocationPromises.push(
         axios(locationAPIUrl).catch((error) => functions.logger.error(error)),
